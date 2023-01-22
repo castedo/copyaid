@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<obj>
+    <num key="max_tokens_ratio" val="1.25"/>
+    <obj key="openai">
+        <num key="n" val="3"/>
+        <num key="frequency_penalty" val="0"/>
+        <str key="model" val="text-davinci-003"/>
+        <num key="presence_penalty" val="0"/>
+        <num key="temperature" val="0.125"/>
+        <num key="top_p" val="1"/>
+    </obj>
+    <str key="prepend"><notline/><![CDATA[
+Revise the following text to improve readability in standard English:
+"""
+]]></str>
+    <str key="append"><![CDATA[
+"""
+]]></str>
+</obj>
