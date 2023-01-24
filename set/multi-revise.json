@@ -1,0 +1,13 @@
+{
+    "max_tokens_ratio": 1.25,
+    "openai": {
+        "n": 3,
+        "frequency_penalty": 0,
+        "model": "text-davinci-003",
+        "presence_penalty": 0,
+        "temperature": 0.125,
+        "top_p": 1
+    },
+    "prepend": "Revise the following text to improve readability in standard English:\n\"\"\"\n",
+    "append": "\n\"\"\"\n"
+}
