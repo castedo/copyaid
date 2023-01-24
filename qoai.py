@@ -73,11 +73,12 @@ def log_openai_query(source_path, request, response, log_path) -> None:
         os.makedirs(log_path, exist_ok=True)
     save_stem = source_path.stem + "." + ts
     print("Saving OpenAI response", save_stem)
-    with open(log_path / (save_stem + ".json"), 'w') as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
-        file.write("\n")
     if 'jsoml' in sys.modules:
         jsoml.dump(data, log_path / (save_stem + ".xml"))
+    else:
+        with open(log_path / (save_stem + ".json"), 'w') as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)
+            file.write("\n")
 
 
 def main(cmd_line_args=None):
