@@ -3,5 +3,7 @@ all:
 
 test:
 	python -m pytest
+	mypy qoai.py
+	@echo Done
 
 .PHONY: all test
