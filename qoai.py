@@ -86,11 +86,19 @@ def diffadapt(orig_text, revisions):
         rev = tokenize(re_token, rev_text)
         matcher.set_seq1(rev)
         # get_opcodes for converting revised text back to orig
-        for tag , r1, r2, o1, o2 in matcher.get_opcodes():
+        for tag, r1, r2, o1, o2 in matcher.get_opcodes():
             # tag meaning is relative to going from revised text back to orig
-            if tag in ['replace', 'insert'] and "\n" in orig[o1:o2]:
-                adapted += ["\n"]
-            adapted += rev[r1:r2]
+            rev_chunk = rev[r1:r2]
+            orig_chunk = orig[o1:o2]
+            if "\n" in orig_chunk:
+                if len(rev_chunk) == 0:
+                    rev_chunk = ["\n"]
+                if tag in ['replace']:
+                    if orig_chunk[0:2] == [".", "\n"] and rev_chunk[0] == ",":
+                        rev_chunk[0] = ",\n"
+                    else:
+                        rev_chunk = ["\n"] + rev_chunk
+            adapted += rev_chunk
         ret.append("".join(adapted))
     return ret
 

@@ -55,3 +55,20 @@ It is classified as a gas giant
 
     got = qoai.diffadapt(orig, [revised])[0]
     assert got == expected
+
+def test_diff_with_commas():
+
+    orig = """XML.
+Many JATS XML.
+Many appear on both publishers and PubMed.
+PubMed is a website.
+"""
+
+    revised = "XML, which format that appear on publishers as well as PubMed, a website."
+
+    expected = """XML,
+ which format that appear on publishers as well as PubMed,
+ a website.
+"""
+    got = qoai.diffadapt(orig, [revised])[0]
+    assert got == expected
