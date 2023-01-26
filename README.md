@@ -42,8 +42,9 @@ The [set/](set/) subdirectory has example settings files for OpenAI text complet
 
 * External *settings* file determine the OpenAI text completion query settings (no hard coding).
 * Automatically calculates OpenAI API max token number based on ratio in settings file.
-* Each output sentence written on its own line, using the [NLTK Python
-  library](https://www.nltk.org/) (if installed).
+* Text returned from OpenAI is broken into separate lines to be more diff-friendly with
+  the original source text given to qoai.
+  (Best results if optional [NLTK Python library](https://www.nltk.org/) is installed.)
 * OpenAI query settings can be authored in [JSOML XML](https://gitlab.com/castedo/jsoml/) (or
   JSON).  JSOML XML has a syntax that makes it convenient for reading and writing the prompt
   text while still being embedded in JSON-ish data.  The prompt text is written
