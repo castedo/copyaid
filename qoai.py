@@ -67,37 +67,51 @@ def log_openai_query(name, request, response, log_path) -> None:
             file.write("\n")
 
 
-def tokenize(pattern, text):
-    return [match[0] for match in pattern.finditer(text)]
+class TokenSequenceMatcher:
+    def __init__(self, focal_text):
+        isjunk = lambda x: x == " "
+        self.matcher = SequenceMatcher(isjunk)
+        self.re_token = re.compile(r"\w+|\W|\n")
+        self.focus = self.tokenize(focal_text)
+        # ... caches detailed information about the second sequence,
+        # so if you want to compare one sequence against many sequences,
+        # use set_seq2() ...
+        self.matcher.set_seq2(self.focus)
+
+    def tokenize(self, text):
+        return [match[0] for match in self.re_token.finditer(text)]
+
+    def set_alternative(self, alt_text):
+        self.alt = self.tokenize(alt_text)
+        self.matcher.set_seq1(self.alt)
+
+    def operations(self):
+        """tag meaning is relative to going from alt text to focal text"""
+
+        return (
+            (tag, self.alt[a1:a2], self.focus[f1:f2])
+            for tag, a1, a2, f1, f2 in self.matcher.get_opcodes()
+        )
 
 
 def diffadapt(orig_text, revisions):
     ret = []
-    re_token = re.compile(r"\w+|\W|\n")
-    isjunk = lambda x: x == " "
-    matcher = SequenceMatcher(isjunk)
-    # ... caches detailed information about the second sequence,
-    # so if you want to compare one sequence against many sequences,
-    # use set_seq2() ...
-    orig = tokenize(re_token, orig_text)
-    matcher.set_seq2(orig)
+    matcher = TokenSequenceMatcher(orig_text)
     for rev_text in revisions:
         adapted = []
-        rev = tokenize(re_token, rev_text)
-        matcher.set_seq1(rev)
-        # get_opcodes for converting revised text back to orig
-        for tag, r1, r2, o1, o2 in matcher.get_opcodes():
-            # tag meaning is relative to going from revised text back to orig
-            rev_chunk = rev[r1:r2]
-            orig_chunk = orig[o1:o2]
-            if "\n" in orig_chunk:
-                if len(rev_chunk) == 0:
-                    rev_chunk = ["\n"]
-                if tag in ['replace']:
-                    if orig_chunk[0:2] == [".", "\n"] and rev_chunk[0] == ",":
-                        rev_chunk[0] = ",\n"
-                    else:
-                        rev_chunk = ["\n"] + rev_chunk
+        matcher.set_alternative(rev_text)
+        # ops for converting revised text back to orig
+        for tag, rev_chunk, orig_chunk in matcher.operations():
+            if orig_chunk[0:2] == [".", "\n"] and rev_chunk[0:1] == [","]:
+                adapted += [",", "\n"]
+                rev_chunk = rev_chunk[1:]
+                orig_chunk = orig_chunk[2:]
+            if "\n" in orig_chunk and not "\n" in rev_chunk:
+                if adapted[-1:] == [" "]:
+                    adapted[-1] = "\n"
+                    adapted += [" "]
+                elif adapted[-1:] != ["\n"]:
+                    adapted += ["\n"]
             adapted += rev_chunk
         ret.append("".join(adapted))
     return ret
