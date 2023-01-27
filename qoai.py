@@ -106,10 +106,14 @@ def diffadapt(orig_text, revisions):
                 adapted += [",", "\n"]
                 rev_chunk = rev_chunk[1:]
                 orig_chunk = orig_chunk[2:]
+            if orig_chunk[0:1] == ["\n"] and rev_chunk[0:1] == [" "]:
+                rev_chunk[0] = "\n"
             if "\n" in orig_chunk and not "\n" in rev_chunk:
                 if adapted[-1:] == [" "]:
                     adapted[-1] = "\n"
                     adapted += [" "]
+                elif rev_chunk[0:2] == [",", " "]:
+                    rev_chunk.insert(1, "\n")
                 elif adapted[-1:] != ["\n"]:
                     adapted += ["\n"]
             adapted += rev_chunk

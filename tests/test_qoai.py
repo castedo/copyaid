@@ -36,6 +36,20 @@ def test_trivial_diffs():
     assert qoai.diffadapt("Hello", ["World"]) == ["World"]
 
 
+def print_operations(orig_text, rev_text):
+    matcher = qoai.TokenSequenceMatcher(orig_text)
+    matcher.set_alternative(rev_text)
+    for tag, rev_chunk, orig_chunk in matcher.operations():
+        if tag == 'equal':
+            print("==", repr(rev_chunk))
+        elif tag == 'delete':
+            print("+>", repr(rev_chunk))
+        elif tag == 'insert':
+            print(repr(orig_chunk), "x>")
+        elif tag == 'replace':
+            print(repr(orig_chunk), ">>", repr(rev_chunk))
+
+
 @pytest.mark.parametrize("case", listdir(CASES_DIR / "diff"))
 def test_diffadapt(case):
     txt = {}
@@ -43,5 +57,6 @@ def test_diffadapt(case):
         path = CASES_DIR / "diff" / case / (key + ".txt")
         txt[key] = open(path).read()
 
+    #print_operations(txt["orig"], txt["revised"])
     got = qoai.diffadapt(txt["orig"], [txt["revised"]])[0]
     assert got == txt["expected"]

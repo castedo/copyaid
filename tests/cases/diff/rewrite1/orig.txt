@@ -1,0 +1,6 @@
+Journals present research in both PDF and HTML formats.
+PDF and HTML have their respective advantages and disadvantages.
+Baseprints are presented in both PDF and HTML formats.
+This lets readers choose their preferred format.
+This is one of the benefits of using baseprints.
+This benefit is absent or very limited in preprint servers.
