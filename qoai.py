@@ -70,10 +70,10 @@ def log_openai_query(name, request, response, log_path) -> None:
 class TokenSequenceMatcher:
     def __init__(self, focal_text):
         isjunk = lambda x: x == " "
-        self.matcher = SequenceMatcher(isjunk)
+        self.matcher = SequenceMatcher(isjunk, autojunk=False)
         self.re_token = re.compile(r"\w+|\W|\n")
         self.focus = self.tokenize(focal_text)
-        # ... caches detailed information about the second sequence,
+        # SequenceMatcher: ... caches detailed information about the second sequence,
         # so if you want to compare one sequence against many sequences,
         # use set_seq2() ...
         self.matcher.set_seq2(self.focus)
@@ -105,8 +105,8 @@ def diffadapt(orig_text, revisions):
             if orig_chunk[0:2] == [".", "\n"] and rev_chunk[0:1] in ([","], [";"]):
                 adapted += rev_chunk[0:1]
                 adapted += ["\n"]
-                rev_chunk = rev_chunk[1:]
-                orig_chunk = orig_chunk[2:]
+                del rev_chunk[0:1]
+                del orig_chunk[0:2]
             if orig_chunk[0:1] == ["\n"] and rev_chunk[0:1] == [" "]:
                 rev_chunk[0] = "\n"
             if "\n" in orig_chunk and not "\n" in rev_chunk:

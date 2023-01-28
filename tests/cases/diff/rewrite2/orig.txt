@@ -1,0 +1,13 @@
+Research communication requires bibliographic references.
+Bibliographic references identify research documents.
+The identity of a baseprint is not based on a single authority.
+Multiple websites can present a baseprint.
+No single website is the authoritative source of a baseprint.
+
+Baseprints are identified by an intrinsic identifier,
+ such as a Software Heritage ID (SWHID).
+The identity of a baseprint is determined by the exact digital encoding of the baseprint.
+The exact digital encoding is a sequence of bytes
+ when a baseprint is a single file.
+Other digital encodings are possible,
+ such as a *git tree* which encodes a directory of files.
