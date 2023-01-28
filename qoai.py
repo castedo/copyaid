@@ -10,7 +10,7 @@ XDG_BASE_DIRS = dict(
 )
 
 # Python Standard Library
-import argparse, json, os, re, sys
+import argparse, json, math, os, re, sys
 from datetime import datetime
 from pathlib import Path
 from difflib import SequenceMatcher
@@ -94,31 +94,66 @@ class TokenSequenceMatcher:
         )
 
 
+class DiffAdaptedRevisionTokens:
+    def __init__(self):
+        self.line_debt = 0
+        self.tokens = []
+
+    def __str__(self):
+        return "".join(self.tokens)
+
+    def append_operations(self, matcher):
+        # ops for converting revised text back to orig
+        for tag, rev_chunk, orig_chunk in matcher.operations():
+            if tag == "equal":
+                self.append_unrevised(rev_chunk)
+            else:
+                self.append_revised(rev_chunk, orig_chunk)
+        return self
+
+    def append_unrevised(self, chunk):
+        # Ideally line debt goes to zero when chunks are unrevised.
+        # But sometimes a sequence matcher gets confused and matches
+        # chunks that are from totally different lines.
+        # So halving and truncating is safer than just setting to zero.
+        self.line_debt = math.trunc(self.line_debt / 2)
+        self._append(chunk)
+
+    def append_revised(self, rev_chunk, orig_chunk):
+        self.line_debt += orig_chunk.count("\n")
+        if orig_chunk[0:1] == ["\n"] and rev_chunk[0:1] == [" "]:
+            rev_chunk[0] = "\n"
+        i = 0
+        while i < len(rev_chunk):
+            if rev_chunk[i] == "\n":
+                self.line_debt -= 1
+            elif rev_chunk[i : i+2] == [".", " "]:
+                rev_chunk[i+1] = "\n"
+            elif self.line_debt > 0:
+                if rev_chunk[i : i+2] in ([",", " "], [";", " "]):
+                    rev_chunk.insert(i+1, "\n")
+            i += 1
+        if self.line_debt > 0:
+            rev_chunk.append("\n")
+            self.line_debt -= 1
+        self._append(rev_chunk)
+
+    def _append(self, chunk):
+        if self.tokens[-1:] == [" "] and chunk[0:1] == ["\n"]:
+            # move trailing space to be after newline
+            self.tokens[-1] = "\n"
+            chunk[0] = " "
+        self.tokens += chunk
+
+
 def diffadapt(orig_text, revisions):
     ret = []
     matcher = TokenSequenceMatcher(orig_text)
     for rev_text in revisions:
-        adapted = []
         matcher.set_alternative(rev_text)
-        # ops for converting revised text back to orig
-        for tag, rev_chunk, orig_chunk in matcher.operations():
-            if orig_chunk[0:2] == [".", "\n"] and rev_chunk[0:1] in ([","], [";"]):
-                adapted += rev_chunk[0:1]
-                adapted += ["\n"]
-                del rev_chunk[0:1]
-                del orig_chunk[0:2]
-            if orig_chunk[0:1] == ["\n"] and rev_chunk[0:1] == [" "]:
-                rev_chunk[0] = "\n"
-            if "\n" in orig_chunk and not "\n" in rev_chunk:
-                if adapted[-1:] == [" "]:
-                    adapted[-1] = "\n"
-                    adapted += [" "]
-                elif rev_chunk[0:2] == [",", " "]:
-                    rev_chunk.insert(1, "\n")
-                elif adapted[-1:] != ["\n"]:
-                    adapted += ["\n"]
-            adapted += rev_chunk
-        ret.append("".join(adapted))
+        tokens = DiffAdaptedRevisionTokens()
+        tokens.append_operations(matcher)
+        ret.append(str(tokens))
     return ret
 
 

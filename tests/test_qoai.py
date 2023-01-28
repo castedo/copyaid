@@ -11,7 +11,7 @@ CASES_DIR = Path(__file__).parent / "cases"
 
 SOURCE_TEXT = "Jupiter big.\nJupiter a planet.\nJupiter gas.\n"
 MOCK_COMPLETION = "Jupiter is a big planet made of gas."
-EXPECTED_TEXT = "Jupiter\n is a big planet\n made of gas.\n"
+EXPECTED_TEXT = "Jupiter is\n a big planet made of\n gas.\n"
 
 def mock_query_openai(req):
     ret = dict(
