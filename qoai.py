@@ -102,8 +102,9 @@ def diffadapt(orig_text, revisions):
         matcher.set_alternative(rev_text)
         # ops for converting revised text back to orig
         for tag, rev_chunk, orig_chunk in matcher.operations():
-            if orig_chunk[0:2] == [".", "\n"] and rev_chunk[0:1] == [","]:
-                adapted += [",", "\n"]
+            if orig_chunk[0:2] == [".", "\n"] and rev_chunk[0:1] in ([","], [";"]):
+                adapted += rev_chunk[0:1]
+                adapted += ["\n"]
                 rev_chunk = rev_chunk[1:]
                 orig_chunk = orig_chunk[2:]
             if orig_chunk[0:1] == ["\n"] and rev_chunk[0:1] == [" "]:
@@ -122,17 +123,7 @@ def diffadapt(orig_text, revisions):
 
 
 def write_revisions(outpath_pattern, source, revisions):
-    texts = []
-    try:
-        import nltk  # type: ignore
-
-        for rev in revisions:
-            lines = nltk.sent_tokenize(rev.lstrip())
-            texts.append("\n".join(lines + [""]))
-    except ImportError:
-        texts = revisions
-
-    revisions = diffadapt(source, texts)
+    revisions = diffadapt(source, revisions)
     for i, out_text in enumerate(revisions):
         with open(outpath_pattern.format(i + 1), "w") as file:
             file.write(out_text)

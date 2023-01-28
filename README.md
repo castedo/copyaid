@@ -44,7 +44,6 @@ The [set/](set/) subdirectory has example settings files for OpenAI text complet
 * Automatically calculates OpenAI API max token number based on ratio in settings file.
 * Text returned from OpenAI is broken into separate lines to be more diff-friendly with
   the original source text given to qoai.
-  (Best results if optional [NLTK Python library](https://www.nltk.org/) is installed.)
 * OpenAI query settings can be authored in [JSOML XML](https://gitlab.com/castedo/jsoml/) (or
   JSON).  JSOML XML has a syntax that makes it convenient for reading and writing the prompt
   text while still being embedded in JSON-ish data.  The prompt text is written
@@ -55,7 +54,7 @@ The [set/](set/) subdirectory has example settings files for OpenAI text complet
 
 ### Installation
 
-The `jsoml` and `nltk` dependencies are optional.
+The `jsoml` dependency is optional.
 
 1. copy [qoai.py](qoai.py)
 2. place a file at `~/.config/qoai/openai_api_key.txt` with the contents of your OpenAI API key

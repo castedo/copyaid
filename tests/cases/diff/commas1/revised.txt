@@ -1,1 +1,1 @@
-XML, which format that appear on publishers as well as PubMed, a website.
+XML; which format that appear on publishers as well as PubMed, a website.

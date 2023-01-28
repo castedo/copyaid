@@ -8,27 +8,27 @@ from pathlib import Path
 
 CASES_DIR = Path(__file__).parent / "cases"
 
-TEXT = "Hello. World."
-TEXT_LINED = "Hello.\nWorld.\n"
 
+SOURCE_TEXT = "Jupiter big.\nJupiter a planet.\nJupiter gas.\n"
+MOCK_COMPLETION = "Jupiter is a big planet made of gas."
+EXPECTED_TEXT = "Jupiter\n is a big planet\n made of gas.\n"
 
 def mock_query_openai(req):
     ret = dict(
         created=1674259148,
-        choices=[dict(text=TEXT)],
+        choices=[dict(text=MOCK_COMPLETION)],
     )
     return ret
-
 
 qoai.live_query_openai = mock_query_openai
 
 
 def test_main(tmp_path):
     srcpath = str(tmp_path / "source.txt")
-    open(srcpath, "w").write(TEXT)
+    open(srcpath, "w").write(SOURCE_TEXT)
     qoai.main(["--set", "set/grammar.xml", srcpath, "--log", str(tmp_path)])
     got = open(srcpath + ".R1").read()
-    assert got == TEXT_LINED
+    assert got == EXPECTED_TEXT
 
 
 def test_trivial_diffs():
