@@ -11,7 +11,7 @@ CASES_DIR = Path(__file__).parent / "cases"
 
 SOURCE_TEXT = "Jupiter big.\nJupiter a planet.\nJupiter gas.\n"
 MOCK_COMPLETION = "Jupiter is a big planet made of gas."
-EXPECTED_TEXT = "Jupiter is\n a big planet made of\n gas.\n"
+EXPECTED_TEXT = "Jupiter is\n a big planet\n made of gas.\n"
 
 def mock_query_openai(req):
     ret = dict(
@@ -32,8 +32,8 @@ def test_main(tmp_path):
 
 
 def test_trivial_diffs():
-    assert qoai.diffadapt("Whatever", [""]) == [""]
-    assert qoai.diffadapt("Hello", ["World"]) == ["World"]
+    assert qoai.diffadapt("Whatever\n", [""]) == ["\n"]
+    assert qoai.diffadapt("Hello\n", ["World"]) == ["World\n"]
 
 
 def print_operations(orig_text, rev_text):

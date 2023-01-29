@@ -135,9 +135,6 @@ class DiffAdaptedRevisionTokens:
                 if rev_chunk[i : i+2] in ([",", " "], [";", " "]):
                     rev_chunk.insert(i+1, "\n")
             i += 1
-        if self.line_debt > 0 and len(rev_chunk) > 0:
-            rev_chunk.append("\n")
-            self.line_debt -= 1
         self._append(rev_chunk)
 
     def _preempt_chunk(self, chunk):
@@ -160,6 +157,8 @@ def diffadapt(orig_text, revisions):
     ret = []
     matcher = TokenSequenceMatcher(orig_text)
     for rev_text in revisions:
+        if not rev_text.endswith("\n"):
+            rev_text += "\n"
         matcher.set_alternative(rev_text)
         tokens = DiffAdaptedRevisionTokens()
         tokens.append_operations(matcher)
