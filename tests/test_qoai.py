@@ -39,6 +39,7 @@ def test_trivial_diffs():
 def print_operations(orig_text, rev_text):
     matcher = qoai.TokenSequenceMatcher(orig_text)
     matcher.set_alternative(rev_text)
+    tokens = qoai.DiffAdaptedRevisionTokens()
     for tag, rev_chunk, orig_chunk in matcher.operations():
         if tag == 'equal':
             print("==", repr(rev_chunk))
@@ -48,6 +49,11 @@ def print_operations(orig_text, rev_text):
             print(repr(orig_chunk), "x>")
         elif tag == 'replace':
             print(repr(orig_chunk), ">>", repr(rev_chunk))
+        if tag == "equal":
+            tokens.append_unrevised(rev_chunk)
+        else:
+            tokens.append_revised(rev_chunk, orig_chunk)
+        print("DEBT LEFT:", tokens.line_debt)
 
 
 @pytest.mark.parametrize("case", listdir(CASES_DIR / "diff"))

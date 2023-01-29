@@ -1,0 +1,14 @@
+Research communication involves the unambiguous referencing of documents.
+Using a location on the world wide web to reference a baseprint is unsatisfactory.
+Multiple websites can present a baseprint
+ and no single website is the authoritative source of a baseprint.
+Instead of referenceing a location on the world wide web,
+ baseprints are referenced with an intrinsic identifier,
+ such as a Software Heritage ID (SWHID).
+The identity of a baseprint is determined by the exact digital encoding of the baseprint.
+The exact digital encoding is a sequence of bytes
+ when a baseprint is a single file.
+When a baseprint is more than a single file, other digital encodings are possible,
+ such as a *git tree*, which encodes a directory of files.
+A SWHID identifies a baseprint using a cryptographic hash of the digital encoding of a
+baseprint.

@@ -112,17 +112,19 @@ class DiffAdaptedRevisionTokens:
         return self
 
     def append_unrevised(self, chunk):
+        self._preempt_chunk(chunk)
         # Ideally line debt goes to zero when chunks are unrevised.
         # But sometimes a sequence matcher gets confused and matches
         # chunks that are from totally different lines.
-        # So halving and truncating is safer than just setting to zero.
-        self.line_debt = math.trunc(self.line_debt / 2)
+        if len(chunk) > 1:
+            # Only consider unrevised chunk longer than one token.
+            # Halving and truncating is safer than just setting to zero.
+            self.line_debt = math.trunc(self.line_debt / 2)
         self._append(chunk)
 
     def append_revised(self, rev_chunk, orig_chunk):
         self.line_debt += orig_chunk.count("\n")
-        if orig_chunk[0:1] == ["\n"] and rev_chunk[0:1] == [" "]:
-            rev_chunk[0] = "\n"
+        self._preempt_chunk(rev_chunk)
         i = 0
         while i < len(rev_chunk):
             if rev_chunk[i] == "\n":
@@ -133,10 +135,18 @@ class DiffAdaptedRevisionTokens:
                 if rev_chunk[i : i+2] in ([",", " "], [";", " "]):
                     rev_chunk.insert(i+1, "\n")
             i += 1
-        if self.line_debt > 0:
+        if self.line_debt > 0 and len(rev_chunk) > 0:
             rev_chunk.append("\n")
             self.line_debt -= 1
         self._append(rev_chunk)
+
+    def _preempt_chunk(self, chunk):
+        if self.line_debt > 0 and chunk[0:1] == [" "] and self.tokens[-1:] != ["\n"]:
+            if self.tokens[-1:] == ["."]:
+                chunk[0] = "\n"
+            else:
+                self.tokens.append("\n")
+                self.line_debt -= 1
 
     def _append(self, chunk):
         if self.tokens[-1:] == [" "] and chunk[0:1] == ["\n"]:
