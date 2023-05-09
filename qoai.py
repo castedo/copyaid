@@ -30,7 +30,7 @@ def live_query_openai(req):
         key_path = get_xdg_path(*QOAI_OPENAI_API_KEY_FILE)
         with open(key_path) as file:
             openai.api_key = file.read().strip()
-    if 'messages' in req:
+    if "messages" in req:
         return openai.ChatCompletion.create(**req)
     else:
         return openai.Completion.create(**req)
@@ -183,37 +183,43 @@ def diffadapt(orig_text, revisions):
 def write_revisions(outpath_pattern, source, revisions):
     revisions = diffadapt(source, revisions)
     for i, out_text in enumerate(revisions):
-        with open(outpath_pattern.format(i + 1), "w") as file:
+        path = Path(outpath_pattern.format(i + 1))
+        os.makedirs(path.parent, exist_ok=True)
+        with open(path, "w") as file:
             file.write(out_text)
 
 
 def main(cmd_line_args=None):
     parser = argparse.ArgumentParser(description="Query OpenAI")
-    parser.add_argument("source", type=Path)
+    parser.add_argument("sources", type=Path, nargs="+")
     parser.add_argument("--set", type=Path)
+    parser.add_argument("--dest", type=Path, default=".")
     parser.add_argument("--log", type=Path)
     args = parser.parse_args(cmd_line_args)
 
-    new_suffix = args.source.suffix + ".R{}"
-    outpath = str(args.source.with_suffix(new_suffix))
+    if args.set is None:
+        args.set = get_xdg_path(*QOAI_DEFAULT_SET_FILE)
+    for s in args.sources:
+        do_file(s, args.set, args.dest, args.log)
 
+
+def do_file(src_path, settings, outdir, log):
+    outpath = str(outdir) + "/R{}/" + src_path.name
     if Path(outpath.format(1)).exists():
         print("Already exists", outpath.format(1))
     else:
-        if args.set is None:
-            args.set = get_xdg_path(*QOAI_DEFAULT_SET_FILE)
-        print("OpenAI query for", args.source)
-        with open(args.source) as file:
-            source = file.read()
-        request = make_openai_request(args.set, source)
+        print("OpenAI query for", src_path)
+        with open(src_path) as file:
+            source_text = file.read()
+        request = make_openai_request(settings, source_text)
         response = live_query_openai(request)
-        log_openai_query(args.source.stem, request, response, args.log)
+        log_openai_query(src_path.stem, request, response, log)
         print("Writing", outpath.format("*"))
         revisions = list()
         for choice in response["choices"]:
             text = choice["text"] if "text" in choice else choice["message"]["content"]
             revisions.append(text)
-        write_revisions(outpath, source, revisions)
+        write_revisions(outpath, source_text, revisions)
 
 
 if __name__ == "__main__":
