@@ -30,21 +30,31 @@ def live_query_openai(req):
         key_path = get_xdg_path(*QOAI_OPENAI_API_KEY_FILE)
         with open(key_path) as file:
             openai.api_key = file.read().strip()
-    return openai.Completion.create(**req)
+    if 'messages' in req:
+        return openai.ChatCompletion.create(**req)
+    else:
+        return openai.Completion.create(**req)
 
 
 def make_openai_request(settings_path, source):
-    if settings_path.suffix == ".json":
-        with open(settings_path) as file:
-            settings = json.load(file)
-    else:
+    if settings_path.suffix == ".xml":
         import jsoml  # type: ignore
 
         settings = jsoml.load(settings_path)
+    else:
+        with open(settings_path) as file:
+            settings = json.load(file)
 
     ret = settings["openai"]
     ret["max_tokens"] = int(settings["max_tokens_ratio"] * len(source) / 4)
-    ret["prompt"] = settings["prepend"] + source + settings["append"]
+    prompt = settings.get("prepend", "") + source + settings.get("append", "")
+    if "chat_system" in settings:
+        ret["messages"] = [
+            {"role": "system", "content": settings["chat_system"]},
+            {"role": "user", "content": prompt},
+        ]
+    else:
+        ret["prompt"] = prompt
     return ret
 
 
@@ -68,11 +78,14 @@ def log_openai_query(name, request, response, log_path) -> None:
 
 
 class TokenSequenceMatcher:
+
+    EOM = None  # just an opaque end-of-message token object for matching algo
+
     def __init__(self, focal_text):
         isjunk = lambda x: x == " "
         self.matcher = SequenceMatcher(isjunk, autojunk=False)
         self.re_token = re.compile(r"\w+|\W|\n")
-        self.focus = self.tokenize(focal_text)
+        self.focus = self.tokenize(focal_text) + [TokenSequenceMatcher.EOM]
         # SequenceMatcher: ... caches detailed information about the second sequence,
         # so if you want to compare one sequence against many sequences,
         # use set_seq2() ...
@@ -82,7 +95,7 @@ class TokenSequenceMatcher:
         return [match[0] for match in self.re_token.finditer(text)]
 
     def set_alternative(self, alt_text):
-        self.alt = self.tokenize(alt_text)
+        self.alt = self.tokenize(alt_text) + [TokenSequenceMatcher.EOM]
         self.matcher.set_seq1(self.alt)
 
     def operations(self):
@@ -100,7 +113,10 @@ class DiffAdaptedRevisionTokens:
         self.tokens = []
 
     def __str__(self):
-        return "".join(self.tokens)
+        strs = self.tokens
+        if strs and strs[-1] == TokenSequenceMatcher.EOM:
+            strs = self.tokens[:-1]
+        return "".join(strs)
 
     def append_operations(self, matcher):
         # ops for converting revised text back to orig
@@ -125,8 +141,7 @@ class DiffAdaptedRevisionTokens:
     def append_revised(self, rev_chunk, orig_chunk):
         self.line_debt += orig_chunk.count("\n")
         self._preempt_chunk(rev_chunk)
-        i = 0
-        while i < len(rev_chunk):
+        for i in range(len(rev_chunk)):
             if rev_chunk[i] == "\n":
                 self.line_debt -= 1
             elif rev_chunk[i : i+2] == [".", " "]:
@@ -134,7 +149,6 @@ class DiffAdaptedRevisionTokens:
             elif self.line_debt > 0:
                 if rev_chunk[i : i+2] in ([",", " "], [";", " "]):
                     rev_chunk.insert(i+1, "\n")
-            i += 1
         self._append(rev_chunk)
 
     def _preempt_chunk(self, chunk):
@@ -195,7 +209,10 @@ def main(cmd_line_args=None):
         response = live_query_openai(request)
         log_openai_query(args.source.stem, request, response, args.log)
         print("Writing", outpath.format("*"))
-        revisions = [c["text"] for c in response["choices"]]
+        revisions = list()
+        for choice in response["choices"]:
+            text = choice["text"] if "text" in choice else choice["message"]["content"]
+            revisions.append(text)
         write_revisions(outpath, source, revisions)
 
 

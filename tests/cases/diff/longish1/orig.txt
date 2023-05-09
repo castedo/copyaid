@@ -1,0 +1,16 @@
+Journals present research in both PDF and HTML formats,
+ a benefit that is absent or very limited in preprint servers.
+Baseprints can also be used to present research in both formats,
+ as they are rendered into both.
+
+Millions of journal articles are encoded in JATS XML
+ and rendered into HTML web pages at PubMed Central.
+Some journals render JATS XML into both PDF and HTML.
+PDF and HTML are presentation formats,
+ whereas a [*format of record*](https://rivervalley.io/format-of-record/)
+ [@bazargan_format_of_record] is a digital encoding
+ that is archived and rendered into presentation formats.
+Baseprints are digitally encoded in a format of record,
+ which can be JATS XML.
+However, baseprints can also be encoded in multiple formats,
+ just as spreadsheet documents can be encoded in multiple formats.
