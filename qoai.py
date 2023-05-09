@@ -123,9 +123,19 @@ class DiffAdaptedRevisionTokens:
         for tag, rev_chunk, orig_chunk in matcher.operations():
             if tag == "equal":
                 self.append_unrevised(rev_chunk)
-            else:
+            elif len(rev_chunk) > 0:
                 self.append_revised(rev_chunk, orig_chunk)
+            else:
+                assert tag == "insert" and len(rev_chunk) == 0
+                # yes, SequenceMatcher tag "insert" is a bit counter-intuitive
+                # and reversed since orig text is seq2 of SequenceMatcher
+                self.undo_petty_deletion(orig_chunk)
         return self
+
+    def undo_petty_deletion(self, orig_chunk):
+        self.line_debt += orig_chunk.count("\n")
+        if orig_chunk == [" "] and self.tokens[-1:] == ["\n"]:
+            self.tokens += [" "]
 
     def append_unrevised(self, chunk):
         self._preempt_chunk(chunk)
