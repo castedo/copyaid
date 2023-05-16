@@ -3,7 +3,7 @@ all:
 
 test:
 	python -m pytest
-	mypy qoai.py
+	mypy copyaidit.py
 	@echo Done
 
 .PHONY: all test

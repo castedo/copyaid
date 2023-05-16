@@ -1,5 +1,16 @@
 #!/usr/bin/python3
 
+# Python Standard Library
+import argparse, json, math, os, re, sys
+from datetime import datetime
+from pathlib import Path
+from difflib import SequenceMatcher
+
+
+###############################################################################
+# Core code to query OpenAI API
+###############################################################################
+
 QOAI_OPENAI_API_KEY_FILE = ("XDG_CONFIG_HOME", "qoai/openai_api_key.txt")
 QOAI_DEFAULT_SET_FILE = ("XDG_CONFIG_HOME", "qoai/set/default")
 QOAI_LOG_DIR = ("XDG_STATE_HOME", "qoai/log")
@@ -9,19 +20,11 @@ XDG_BASE_DIRS = dict(
     XDG_STATE_HOME="~/.local/state",
 )
 
-# Python Standard Library
-import argparse, json, math, os, re, sys
-from datetime import datetime
-from pathlib import Path
-from difflib import SequenceMatcher
-
-
 def get_xdg_path(xdg_dir_var: str, subpath) -> Path:
     base_dir = os.environ.get(xdg_dir_var)
     if base_dir is None:
         base_dir = XDG_BASE_DIRS[xdg_dir_var]
     return Path(base_dir).expanduser() / subpath
-
 
 def live_query_openai(req):
     import openai
@@ -34,7 +37,6 @@ def live_query_openai(req):
         return openai.ChatCompletion.create(**req)
     else:
         return openai.Completion.create(**req)
-
 
 def make_openai_request(settings_path, source):
     if settings_path.suffix == ".xml":
@@ -57,7 +59,6 @@ def make_openai_request(settings_path, source):
         ret["prompt"] = prompt
     return ret
 
-
 def log_openai_query(name, request, response, log_path) -> None:
     t = datetime.utcfromtimestamp(response["created"])
     ts = t.isoformat().replace("-", "").replace(":", "") + "Z"
@@ -76,6 +77,10 @@ def log_openai_query(name, request, response, log_path) -> None:
             json.dump(data, file, indent=4, ensure_ascii=False)
             file.write("\n")
 
+
+###############################################################################
+# Code that "diff-adapts" altered text to be more diff-friendly with original
+###############################################################################
 
 class TokenSequenceMatcher:
 
@@ -105,7 +110,6 @@ class TokenSequenceMatcher:
             (tag, self.alt[a1:a2], self.focus[f1:f2])
             for tag, a1, a2, f1, f2 in self.matcher.get_opcodes()
         )
-
 
 class DiffAdaptedRevisionTokens:
     def __init__(self):
@@ -176,7 +180,6 @@ class DiffAdaptedRevisionTokens:
             chunk[0] = " "
         self.tokens += chunk
 
-
 def diffadapt(orig_text, revisions):
     ret = []
     matcher = TokenSequenceMatcher(orig_text)
@@ -190,6 +193,10 @@ def diffadapt(orig_text, revisions):
     return ret
 
 
+###############################################################################
+# Code for handling logic of this command line tool
+###############################################################################
+
 def write_revisions(outpath_pattern, source, revisions):
     revisions = diffadapt(source, revisions)
     for i, out_text in enumerate(revisions):
@@ -197,21 +204,6 @@ def write_revisions(outpath_pattern, source, revisions):
         os.makedirs(path.parent, exist_ok=True)
         with open(path, "w") as file:
             file.write(out_text)
-
-
-def main(cmd_line_args=None):
-    parser = argparse.ArgumentParser(description="Query OpenAI")
-    parser.add_argument("sources", type=Path, nargs="+")
-    parser.add_argument("--set", type=Path)
-    parser.add_argument("--dest", type=Path, default=".")
-    parser.add_argument("--log", type=Path)
-    args = parser.parse_args(cmd_line_args)
-
-    if args.set is None:
-        args.set = get_xdg_path(*QOAI_DEFAULT_SET_FILE)
-    for s in args.sources:
-        do_file(s, args.set, args.dest, args.log)
-
 
 def do_file(src_path, settings, outdir, log):
     outpath = str(outdir) + "/R{}/" + src_path.name
@@ -231,6 +223,18 @@ def do_file(src_path, settings, outdir, log):
             revisions.append(text)
         write_revisions(outpath, source_text, revisions)
 
+def main(cmd_line_args=None):
+    parser = argparse.ArgumentParser(description="Query OpenAI")
+    parser.add_argument("sources", type=Path, nargs="+")
+    parser.add_argument("--set", type=Path)
+    parser.add_argument("--dest", type=Path, default=".")
+    parser.add_argument("--log", type=Path)
+    args = parser.parse_args(cmd_line_args)
+
+    if args.set is None:
+        args.set = get_xdg_path(*QOAI_DEFAULT_SET_FILE)
+    for s in args.sources:
+        do_file(s, args.set, args.dest, args.log)
 
 if __name__ == "__main__":
     exit(main())

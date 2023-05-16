@@ -1,70 +1,99 @@
-OpenAI Utilities
-================
+co<i>py</i><b>AI</b>dit
+=======================
 
-Utility [qoai.py](./qoai.py)
-----------------------------
+Perform copyediting and proofreading
+ with the OpenAI (GPT) API from the command line.
 
-Low level utility to take
+Utility [`copyaidit.py`](./copyaidit.py), a single Python file, takes:
+
 * your text file, plus
-* query settings file
+* a query settings file
 
 and then
 
-1. "merge" them into an OpenAI GPT API query
-2. query the OpenAI GPT API
-3. log the request sent and response received
-4. write the N text completions as N text files next to the original text file
+1. merges them into an OpenAI API query,
+2. queries the OpenAI API service, and
+3. writes the (one or more) response choices to text files in separate subdirectories.
+
+#### Notable features
+
+* White space returned from OpenAI is adjusted to be more diff-friendly with
+  the original source text.
+* Automatic calculation of API max token number based on ratio in settings file.
+* Logs the API request sent and response received.
 
 
-### Example Usage
+## Example usage
 
 Take your file `mydoc.md` and ask OpenAI GPT to generate three revisions
-per the settings of [set/multi-revise.xml](set/multi-revise.xml).
+per the query settings of [set/multi-revise.xml](set/multi-revise.xml).
 
 ```
-$ qoai.py mydoc.md --set set/multi-revise.xml
-$ ls mydoc.md*
-mydoc.md  mydoc.md.R1  mydoc.md.R2  mydoc.md.R3
+$ copyaidit.py mydoc.md --set set/multi-revise.xml
+$ ls R*/mydoc.md
+R1/mydoc.md  R2/mydoc.md  R3/mydoc.md
 ```
 
-Tweak the settings file to your needs: like the prompt sent to GPT, number of revisions to
-generate, etc...
+Tweak the query settings file to your needs:
+ like the prompt sent to GPT, temperature, number of revisions to generate, etc...
 
-* [OpenAI API text completion intro](https://beta.openai.com/docs/guides/completion)
+* [OpenAI Chat API intro](https://platform.openai.com/docs/guides/chat)
 for guidance of prompt text
-* [OpenAI API text completion refrence](https://beta.openai.com/docs/api-reference/models/retrieve)
-for details on settings
-
-The [set/](set/) subdirectory has example settings files for OpenAI text completion queries.
+* [OpenAI API reference](https://platform.openai.com/docs/api-reference/chat)
+for details on query settings.
 
 
-### Some [qoai.py](./qoai.py) features
+## Example query settings files
 
-* External *settings* file determine the OpenAI text completion query settings (no hard coding).
-* Automatically calculates OpenAI API max token number based on ratio in settings file.
-* Text returned from OpenAI is broken into separate lines to be more diff-friendly with
-  the original source text given to qoai.
-* OpenAI query settings can be authored in [JSOML XML](https://gitlab.com/castedo/jsoml/) (or
-  JSON).  JSOML XML has a syntax that makes it convenient for reading and writing the prompt
-  text while still being embedded in JSON-ish data.  The prompt text is written
-  verbatim line by line without any escaping (except for the trigram `]]>`).
-  An example is [set/grammar.xml](set/grammar.xml).
-* Default settings file (`~/.config/qoai/set/default`)
+The [set/](set/) subdirectory has example query settings files for OpenAI API queries.
 
 
-### Installation
+## Setup
 
-The `jsoml` dependency is optional.
+1. `pip install openai`
+2. sign up to use the OpenAI API (the API, not ChatGPT)
+3. store your OpenAI API key in a file at `~/.config/qoai/openai_api_key.txt`
+4. copy [`copyaidit.py`](./copyaidit.py) to your system
+5. run copyaidit.py for command line help
+6. Email Castedo to write more documentation and improve installation!
 
-1. copy [qoai.py](qoai.py)
-2. place a file at `~/.config/qoai/openai_api_key.txt` with the contents of your OpenAI API key
-3. run qoai.py for command line help
-4. Email Castedo to write more documentation and improve installation!
 
-If you want to use JSOML XML instead of JSON, install [jsoml](https://gitlab.com/castedo/jsoml):
+### Optional features
+
+#### Default query settings file
+
+Optionally store a default query settings file at `~/.config/qoai/set/default`.
+
+
+#### JSOML
+
+Query settings files can be in ubiquitous JSON format
+ or niche [JSOML XML](https://gitlab.com/castedo/jsoml/) format.
+Long prompts of many lines are easier to read and edit in JSOML format.
+Prompt text is written verbatim without any escaping (except for the trigram `]]>`).
+For examples, see the `.xml` files in the [set/](set/) subdirectory.
+
+If you want to use JSOML XML instead of JSON, install the jsoml Python package:
 ```
-python3 -m pip install git+https://gitlab.com/castedo/jsoml.git
+pip install jsoml
 ```
+For documentation on JSOML visit [gitlab.com/castedo/jsoml](https://gitlab.com/castedo/jsoml).
+
+
+## FAQ
+
+<dl>
+
+<dt>Does it work with LaTeX files?</dt>
+<dd>Yes.</dd>
+
+<dt>Does it work with markdown?</dt>
+<dd>Yes.</dd>
+
+<dt>Does it work with Word documents?</dt>
+<dd>Probably not.</dd>
+
+</dl>
 
 
 Acknowledgements

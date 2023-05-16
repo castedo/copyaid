@@ -10,7 +10,15 @@
     </obj>
     <str key="chat_system">You are a helpful assistant.</str>
     <str key="prepend"><notline/><![CDATA[
-Proofread the following text and reply with just the corrected text:
+Proofread some text from a document, correct any errors, and reply with only the text even if there are no corrections.
+Do not correct the spelling of the words:
+[
+"copypasta",
+"janky",
+"noob"
+]
+Preserve embedded markdown and TeX.
+The text to proofread is:
 """
 ]]></str>
     <str key="append"><![CDATA[
