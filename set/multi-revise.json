@@ -1,13 +1,14 @@
 {
+    "append": "\n\"\"\"\n",
+    "chat_system": "You are a helpful assistant.",
     "max_tokens_ratio": 1.25,
     "openai": {
-        "n": 3,
         "frequency_penalty": 0,
-        "model": "text-davinci-003",
+        "model": "gpt-3.5-turbo",
+        "n": 2,
         "presence_penalty": 0,
         "temperature": 0.125,
         "top_p": 1
     },
-    "prepend": "Revise the following text to improve readability in standard English:\n\"\"\"\n",
-    "append": "\n\"\"\"\n"
+    "prepend": "Revise some text from a research document.\nImprove readability in standard English.\nKeep sentences concise and to the point.\nPreserve embedded markdown and LaTeX.\nReply with only the rewritten text.\nThe text to revise is:\n\"\"\"\n"
 }
