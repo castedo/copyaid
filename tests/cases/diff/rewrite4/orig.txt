@@ -1,14 +1,14 @@
 Bibliographic references should unambiguously identify research documents.
 When identifying a baseprint,
- a web address (URL) does not suffice as a reference.
+a web address (URL) does not suffice as a reference.
 Multiple websites can present a baseprint
- and no single website is the authoritative source of a baseprint.
+and no single website is the authoritative source of a baseprint.
 Instead of referencing a web address,
- baseprints are referenced with an intrinsic identifier,
- such as a Software Heritage ID (SWHID)
- [@cosmo_referencing_2020] [@dicosmo:hal-01865790].
+baseprints are referenced with an intrinsic identifier,
+such as a Software Heritage ID (SWHID)
+[@cosmo_referencing_2020] [@dicosmo:hal-01865790].
 The identity of a baseprint is determined by the exact digital encoding of the baseprint.
 The exact digital encoding is a sequence of bytes
- if a baseprint consists of only a single file.
+if a baseprint consists of only a single file.
 If a baseprint consists of a directory of files,
- then the digital encoding can be a *git tree*.
+then the digital encoding can be a *git tree*.

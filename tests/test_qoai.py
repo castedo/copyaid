@@ -11,7 +11,7 @@ CASES_DIR = Path(__file__).parent / "cases"
 
 SOURCE_TEXT = "Jupiter big.\nJupiter a planet.\nJupiter gas.\n"
 MOCK_COMPLETION = "Jupiter is a big planet made of gas."
-EXPECTED_TEXT = "Jupiter is\n a big planet\n made of gas.\n"
+EXPECTED_TEXT = "Jupiter is\na big planet\nmade of gas.\n"
 
 def mock_query_openai(req):
     ret = dict(
@@ -28,7 +28,7 @@ def test_main(tmp_path):
     open(srcpath, "w").write(SOURCE_TEXT)
     copyaidit.main([
         str(srcpath),
-        "--set", "set/grammar.xml",
+        "--set", "set/proofread.xml",
         "--dest", str(tmp_path),
         "--log", str(tmp_path),
     ])

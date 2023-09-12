@@ -127,19 +127,11 @@ class DiffAdaptedRevisionTokens:
         for tag, rev_chunk, orig_chunk in matcher.operations():
             if tag == "equal":
                 self.append_unrevised(rev_chunk)
-            elif len(rev_chunk) > 0:
-                self.append_revised(rev_chunk, orig_chunk)
             else:
-                assert tag == "insert" and len(rev_chunk) == 0
-                # yes, SequenceMatcher tag "insert" is a bit counter-intuitive
-                # and reversed since orig text is seq2 of SequenceMatcher
-                self.undo_petty_deletion(orig_chunk)
+                self.line_debt += orig_chunk.count("\n")
+                if len(rev_chunk) > 0:
+                    self.append_revised(rev_chunk)
         return self
-
-    def undo_petty_deletion(self, orig_chunk):
-        self.line_debt += orig_chunk.count("\n")
-        if orig_chunk == [" "] and self.tokens[-1:] == ["\n"]:
-            self.tokens += [" "]
 
     def append_unrevised(self, chunk):
         self._preempt_chunk(chunk)
@@ -150,10 +142,9 @@ class DiffAdaptedRevisionTokens:
             # Only consider unrevised chunk longer than one token.
             # Halving and truncating is safer than just setting to zero.
             self.line_debt = math.trunc(self.line_debt / 2)
-        self._append(chunk)
+        self.tokens += chunk
 
-    def append_revised(self, rev_chunk, orig_chunk):
-        self.line_debt += orig_chunk.count("\n")
+    def append_revised(self, rev_chunk):
         self._preempt_chunk(rev_chunk)
         for i in range(len(rev_chunk)):
             if rev_chunk[i] == "\n":
@@ -162,23 +153,13 @@ class DiffAdaptedRevisionTokens:
                 rev_chunk[i+1] = "\n"
             elif self.line_debt > 0:
                 if rev_chunk[i : i+2] in ([",", " "], [";", " "]):
-                    rev_chunk.insert(i+1, "\n")
-        self._append(rev_chunk)
+                    rev_chunk[i+1] = "\n"
+        self.tokens += rev_chunk
 
     def _preempt_chunk(self, chunk):
         if self.line_debt > 0 and chunk[0:1] == [" "] and self.tokens[-1:] != ["\n"]:
-            if self.tokens[-1:] == ["."]:
-                chunk[0] = "\n"
-            else:
-                self.tokens.append("\n")
-                self.line_debt -= 1
+            chunk[0] = "\n"
 
-    def _append(self, chunk):
-        if self.tokens[-1:] == [" "] and chunk[0:1] == ["\n"]:
-            # move trailing space to be after newline
-            self.tokens[-1] = "\n"
-            chunk[0] = " "
-        self.tokens += chunk
 
 def diffadapt(orig_text, revisions):
     ret = []
