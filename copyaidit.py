@@ -207,7 +207,7 @@ def do_file(src_path, settings, outdir, log):
 def main(cmd_line_args=None):
     parser = argparse.ArgumentParser(description="Query OpenAI")
     parser.add_argument("sources", type=Path, nargs="+")
-    parser.add_argument("--set", type=Path)
+    parser.add_argument("-s", "--set", type=Path)
     parser.add_argument("--dest", type=Path, default=".")
     parser.add_argument("--log", type=Path)
     args = parser.parse_args(cmd_line_args)

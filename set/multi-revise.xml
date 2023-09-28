@@ -15,6 +15,7 @@ Revise some text from a research document.
 Improve readability in standard English.
 Keep sentences concise and to the point.
 Preserve embedded markdown and LaTeX.
+Correct errors.
 Reply with only the rewritten text.
 The text to revise is:
 """

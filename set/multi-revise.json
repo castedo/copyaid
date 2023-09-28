@@ -10,5 +10,5 @@
         "temperature": 0.125,
         "top_p": 1
     },
-    "prepend": "Revise some text from a research document.\nImprove readability in standard English.\nKeep sentences concise and to the point.\nPreserve embedded markdown and LaTeX.\nReply with only the rewritten text.\nThe text to revise is:\n\"\"\"\n"
+    "prepend": "Revise some text from a research document.\nImprove readability in standard English.\nKeep sentences concise and to the point.\nPreserve embedded markdown and LaTeX.\nCorrect errors.\nReply with only the rewritten text.\nThe text to revise is:\n\"\"\"\n"
 }
