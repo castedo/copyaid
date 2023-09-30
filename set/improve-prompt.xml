@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<obj>
+    <num key="max_tokens_ratio" val="1.25"/>
+    <obj key="openai">
+        <num key="n" val="2"/>
+        <num key="frequency_penalty" val="0"/>
+        <str key="model" val="gpt-3.5-turbo"/>
+        <num key="presence_penalty" val="0"/>
+        <num key="temperature" val="0.25"/>
+        <num key="top_p" val="1"/>
+    </obj>
+    <str key="chat_system">You are a helpful assistant.</str>
+    <str key="prepend"><notline/><![CDATA[
+Improve the following prompt for OpenAI GPT:
+"""
+]]></str>
+    <str key="append"><![CDATA[
+"""
+]]></str>
+</obj>

@@ -1,0 +1,9 @@
+After installing the software, start the computer.
+
+Clicking OK saves the configuration.
+
+You create a server.
+
+To view the document, click View.
+
+For more information, refer to the document.
