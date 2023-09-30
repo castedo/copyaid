@@ -11,12 +11,11 @@
     </obj>
     <str key="chat_system">You are a helpful assistant.</str>
     <str key="prepend"><notline/><![CDATA[
-Revise some text from a research document.
-Improve readability in standard English.
-Keep sentences concise and to the point.
-Preserve embedded markdown and LaTeX.
-Reply with only the rewritten text.
-The text to revise is:
+Revise and correct errors in the following text for software documentation.
+Improve readability by using standard English and keeping sentences concise.
+Preserve any embedded markdown.
+Reply with only the revised text.
+The original text to revise is:
 """
 ]]></str>
     <str key="append"><![CDATA[
