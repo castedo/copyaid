@@ -1,3 +1,5 @@
-Jupiter is
-a big planet
-made of gas.
+My Document
+===========
+
+!!! note
+    This is a markdown admonition. It should remain indented.

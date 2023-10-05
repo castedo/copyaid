@@ -20,11 +20,13 @@ XDG_BASE_DIRS = dict(
     XDG_STATE_HOME="~/.local/state",
 )
 
+
 def get_xdg_path(xdg_dir_var: str, subpath) -> Path:
     base_dir = os.environ.get(xdg_dir_var)
     if base_dir is None:
         base_dir = XDG_BASE_DIRS[xdg_dir_var]
     return Path(base_dir).expanduser() / subpath
+
 
 def live_query_openai(req):
     import openai
@@ -38,15 +40,21 @@ def live_query_openai(req):
     else:
         return openai.Completion.create(**req)
 
+
+def read_settings_file(settings_path: Path) -> dict:
+    with open(settings_path, 'rb') as file:
+        if settings_path.suffix == ".json":
+            return json.load(file)
+        try:
+            return json.load(file)
+        except json.JSONDecodeError:
+            pass
+    import jsoml  # type: ignore
+    return jsoml.load(settings_path)
+
+
 def make_openai_request(settings_path, source):
-    if settings_path.suffix == ".xml":
-        import jsoml  # type: ignore
-
-        settings = jsoml.load(settings_path)
-    else:
-        with open(settings_path) as file:
-            settings = json.load(file)
-
+    settings = read_settings_file(settings_path)
     ret = settings["openai"]
     ret["max_tokens"] = int(settings["max_tokens_ratio"] * len(source) / 4)
     prompt = settings.get("prepend", "") + source + settings.get("append", "")
@@ -58,6 +66,7 @@ def make_openai_request(settings_path, source):
     else:
         ret["prompt"] = prompt
     return ret
+
 
 def log_openai_query(name, request, response, log_path) -> None:
     t = datetime.utcfromtimestamp(response["created"])
@@ -131,7 +140,15 @@ class DiffAdaptedRevisionTokens:
                 self.line_debt += orig_chunk.count("\n")
                 if len(rev_chunk) > 0:
                     self.append_revised(rev_chunk)
+                else:
+                    self.undo_delete(orig_chunk)
         return self
+
+    def undo_delete(self, orig_chunk):
+        new_line = (len(self.tokens) == 0 or self.tokens[-1:] == ['\n'])
+        if new_line and all(s.isspace() for s in orig_chunk):
+            # undo deletion of indentation and extra newlines
+            self.tokens += orig_chunk
 
     def append_unrevised(self, chunk):
         self._preempt_chunk(chunk)
