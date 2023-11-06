@@ -1,0 +1,10 @@
+pages:
+  stage: deploy
+  image: docker.io/squidfunk/mkdocs-material:9.4.8
+  script:
+    - build --strict --verbose --site-dir public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == "copyaid.it"
