@@ -1,6 +1,7 @@
 import pytest
 
-import copyaidit
+import copyaid.cli
+from copyaid.diff import diffadapt
 
 from os import listdir
 from pathlib import Path
@@ -20,13 +21,13 @@ def mock_query_openai(req):
     )
     return ret
 
-copyaidit.live_query_openai = mock_query_openai
+copyaid.cli.live_query_openai = mock_query_openai
 
 
 def test_main(tmp_path):
     srcpath = tmp_path / "source.txt"
     open(srcpath, "w").write(SOURCE_TEXT)
-    copyaidit.main([
+    copyaid.cli.main([
         str(srcpath),
         "--set", "set/proofread.xml",
         "--dest", str(tmp_path),
@@ -37,14 +38,14 @@ def test_main(tmp_path):
 
 
 def test_trivial_diffs():
-    assert copyaidit.diffadapt("Whatever\n", [""]) == ["\n"]
-    assert copyaidit.diffadapt("Hello\n", ["World"]) == ["World\n"]
+    assert diffadapt("Whatever\n", [""]) == ["\n"]
+    assert diffadapt("Hello\n", ["World"]) == ["World\n"]
 
 
 def print_operations(orig_text, rev_text):
-    matcher = copyaidit.TokenSequenceMatcher(orig_text)
+    matcher = copyaid.diff.TokenSequenceMatcher(orig_text)
     matcher.set_alternative(rev_text)
-    tokens = copyaidit.DiffAdaptedRevisionTokens()
+    tokens = copyaid.diff.DiffAdaptedRevisionTokens()
     for tag, rev_chunk, orig_chunk in matcher.operations():
         if tag == 'equal':
             print("==", repr(rev_chunk))
@@ -74,7 +75,7 @@ def read_text_files(subcase_dir):
 def test_diffadapt(case):
     txt = read_text_files(CASES_DIR / "diff" / case)
     #print_operations(txt["orig"], txt["revised"])
-    got = copyaidit.diffadapt(txt["orig"], [txt["revised"]])[0]
+    got = diffadapt(txt["orig"], [txt["revised"]])[0]
     assert got == txt["expected"]
 
 
@@ -82,5 +83,5 @@ def test_diffadapt(case):
 def test_diffadapt_undo(case):
     txt = read_text_files(CASES_DIR / "undo" / case)
     #print_operations(txt["orig"], txt["revised"])
-    got = copyaidit.diffadapt(txt["orig"], [txt["revised"]])[0]
+    got = diffadapt(txt["orig"], [txt["revised"]])[0]
     assert got == txt["orig"]

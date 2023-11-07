@@ -1,3 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "copyaid"
+version = "0.0.1"
+dependencies = [
+    "openai",
+    "ruamel.yaml",
+]
+description = "Copy-edit with OpenAI from a CLI."
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3", 
+    "License :: OSI Approved :: MIT License", 
+    "Operating System :: POSIX",
+]
+license = {file = "LICENSE"}
+authors = [
+  { name="Castedo Ellerman", author_email = "castedo@castedo.com" },
+]
+
+[project.urls]
+Homepage = "https://gitlab.com/castedo/copyaid"
+
+[project.scripts]
+copyaid = "copyaid.cli:main"
+
 [tool.yapf]
 column_limit = 88
 based_on_style = "facebook"

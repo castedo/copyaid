@@ -22,7 +22,7 @@ def copyaidit(src_path):
     return Path("R1") / src_path.name
 
 
-def test_case(case_path: Path):
+def blast_test_case(case_path: Path):
     print(case_path)
     with chdir(case_path):
         assert_cold_settings("settings.xml")
@@ -52,7 +52,7 @@ def test_case(case_path: Path):
 
 def main(cmd_line_args=None):
     for case in CASES_DIR.iterdir():
-        test_case(case)
+        blast_test_case(case)
 
 
 if __name__ == "__main__":
