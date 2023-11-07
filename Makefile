@@ -2,8 +2,8 @@ all:
 	@echo -e "Nope, try:\n  make test"
 
 test:
+	mypy copyaid
 	python -m pytest
-	mypy copyaidit.py
 	@echo Done
 
 .PHONY: all test

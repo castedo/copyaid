@@ -1,4 +1,4 @@
-from .core import make_openai_request, live_query_openai
+from .core import make_openai_request, live_query_openai, get_xdg_path
 from .diff import diffadapt
 
 # Python standard libraries
@@ -10,7 +10,7 @@ QOAI_DEFAULT_SET_FILE = ("XDG_CONFIG_HOME", "qoai/set/default")
 QOAI_LOG_DIR = ("XDG_STATE_HOME", "qoai/log")
 
 
-def log_openai_query(name, request, response, log_path) -> None:
+def log_openai_query(name, request, response, log_path):
     t = datetime.utcfromtimestamp(response["created"])
     ts = t.isoformat().replace("-", "").replace(":", "") + "Z"
     data = dict(request=request, response=response)
@@ -57,15 +57,21 @@ def do_file(src_path, settings, outdir, log):
         write_revisions(outpath, source_text, revisions)
 
 
-def main(cmd_line_args=None):
-    parser = argparse.ArgumentParser(description="Query OpenAI")
-    parser.add_argument("sources", type=Path, nargs="+")
-    parser.add_argument("-s", "--set", type=Path)
-    parser.add_argument("--dest", type=Path, default=".")
-    parser.add_argument("--log", type=Path)
-    args = parser.parse_args(cmd_line_args)
+class Main:
+    def __init__(self, cmd_line_args = None):
+        parser = argparse.ArgumentParser(description="Query OpenAI")
+        parser.add_argument("sources", type=Path, nargs="+")
+        parser.add_argument("-s", "--set", type=Path)
+        parser.add_argument("--dest", type=Path, default=".")
+        parser.add_argument("--log", type=Path)
+        parser.parse_args(cmd_line_args, self)
 
-    if args.set is None:
-        args.set = get_xdg_path(*QOAI_DEFAULT_SET_FILE)
-    for s in args.sources:
-        do_file(s, args.set, args.dest, args.log)
+    def run(self):
+        if self.set is None:
+            self.set = get_xdg_path(*QOAI_DEFAULT_SET_FILE)
+        for s in self.sources:
+            do_file(s, self.set, self.dest, self.log)
+        return 0
+
+def main(cmd_line_args = None):
+    return Main(cmd_line_args).run()

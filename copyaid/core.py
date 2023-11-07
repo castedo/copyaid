@@ -29,10 +29,7 @@ def live_query_openai(req):
         key_path = get_xdg_path(*QOAI_OPENAI_API_KEY_FILE)
         with open(key_path) as file:
             openai.api_key = file.read().strip()
-    if "messages" in req:
-        return openai.ChatCompletion.create(**req)
-    else:
-        return openai.Completion.create(**req)
+    return openai.ChatCompletion.create(**req)
 
 
 def read_settings_file(settings_path: Path) -> dict:
@@ -52,13 +49,8 @@ def make_openai_request(settings_path, source):
     ret = settings["openai"]
     ret["max_tokens"] = int(settings["max_tokens_ratio"] * len(source) / 4)
     prompt = settings.get("prepend", "") + source + settings.get("append", "")
-    if "chat_system" in settings:
-        ret["messages"] = [
-            {"role": "system", "content": settings["chat_system"]},
-            {"role": "user", "content": prompt},
-        ]
-    else:
-        ret["prompt"] = prompt
+    ret["messages"] = [
+        {"role": "system", "content": settings["chat_system"]},
+        {"role": "user", "content": prompt},
+    ]
     return ret
-
-
