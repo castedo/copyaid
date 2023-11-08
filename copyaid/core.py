@@ -4,7 +4,7 @@ from pathlib import Path
 
 import openai
 import toml  # type: ignore
-from typing import Optional
+from typing import Any, Optional
 
 
 class LiveOpenAiApi:
@@ -13,11 +13,11 @@ class LiveOpenAiApi:
             with open(api_key_path, 'r') as file:
                 openai.api_key = file.read().strip()
 
-    def query(self, req: dict) -> dict:
-        return openai.ChatCompletion.create(**req)
+    def query(self, req: Any) -> Any:
+        return openai.ChatCompletion.create(**req)  # type: ignore
 
 
-def read_settings_file(settings_path: Path) -> dict:
+def read_settings_file(settings_path: Path) -> Any:
     with open(settings_path, 'rb') as file:
         if settings_path.suffix == ".json":
             return json.load(file)
@@ -32,37 +32,49 @@ def read_settings_file(settings_path: Path) -> dict:
     return ret
 
 
-def make_openai_request(settings_path, source):
-    settings = read_settings_file(settings_path)
+def make_openai_request(settings: Any, source: str) -> Any:
     ret = settings["openai"]
     ret["max_tokens"] = int(settings["max_tokens_ratio"] * len(source) / 4)
     prompt = settings.get("prepend", "") + source + settings.get("append", "")
     ret["messages"] = [
-        {"role": "system", "content": settings["chat_system"]},
-        {"role": "user", "content": prompt},
+        {
+            "role": "system",
+            "content": settings["chat_system"]
+        },
+        {
+            "role": "user",
+            "content": prompt
+        },
     ]
     return ret
 
 
 class Config:
     def __init__(self, config_file: Path):
-        self._file_path = config_file if config_file.exists() else None
-        if self._file_path:
-            with open(self._file_path, "r") as f:
+        if config_file.exists():
+            with open(config_file, "r") as f:
                 self._data = dict(toml.load(f))
         else:
             self._data = dict()
+        self.path = config_file
 
-    def api_key_path(self) -> Optional[Path]:
+    def _resolve_path(self, s: Any) -> Optional[Path]:
         ret = None
-        if self._file_path:
-            s = self._data.get("openai_api_key_file")
-            if s is not None:
-                ret = Path(str(s)).expanduser()
-                if not ret.is_absolute():
-                    ret = self._file_path.parent / ret
+        if s is not None:
+            ret = Path(str(s)).expanduser()
+            if not ret.is_absolute():
+                ret = self.path.parent / ret
         return ret
 
+    def api_key_path(self) -> Optional[Path]:
+        s = self._data.get("openai_api_key_file")
+        return self._resolve_path(s)
+
     @property
-    def log_format(self):
+    def log_format(self) -> Optional[str]:
         return self._data.get("log_format")
+
+    def get_task_settings(self, task_name: str) -> Any:
+        s = self._data.get("tasks", {}).get(task_name)
+        p = self._resolve_path(s)
+        return None if p is None else read_settings_file(p)

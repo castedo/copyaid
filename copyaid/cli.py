@@ -3,15 +3,15 @@ from .diff import diffadapt
 
 # Python standard libraries
 import argparse, json, os
+from sys import stderr
 from datetime import datetime
 from pathlib import Path
 from warnings import warn
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 COPYAID_TMP_DIR = ("TMPDIR", "copyaid")
 COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/copyaid.toml")
 COPYAID_LOG_DIR = ("XDG_STATE_HOME", "copyaid/log")
-QOAI_DEFAULT_SET_FILE = ("XDG_CONFIG_HOME", "qoai/set/default")
 
 STD_BASE_DIRS = dict(
     TMPDIR="/tmp",
@@ -20,14 +20,16 @@ STD_BASE_DIRS = dict(
 )
 
 
-def get_std_path(env_var_name: str, subpath) -> Path:
+def get_std_path(env_var_name: str, subpath: str) -> Path:
     base_dir = os.environ.get(env_var_name)
     if base_dir is None:
         base_dir = STD_BASE_DIRS[env_var_name]
     return Path(base_dir).expanduser() / subpath
 
 
-def log_openai_query(name, request, response, log_format):
+def log_openai_query(
+    name: str, request: Any, response: Any, log_format: Optional[str]
+) -> None:
     if not log_format:
         return
     t = datetime.utcfromtimestamp(response["created"])
@@ -48,8 +50,8 @@ def log_openai_query(name, request, response, log_format):
         warn("Unsupported log format: {}".format(log_format))
 
 
-def write_revisions(outpath_pattern, source, revisions):
-    revisions = diffadapt(source, revisions)
+def write_revisions(outpath_pattern: str, source: str, revisions: list[str]) -> None:
+    revisions = diffadapt(source, revisions)  # type: ignore
     for i, out_text in enumerate(revisions):
         path = Path(outpath_pattern.format(i + 1))
         os.makedirs(path.parent, exist_ok=True)
@@ -61,13 +63,13 @@ class Main:
     def __init__(self, cmd_line_args: Optional[list[str]] = None):
         parser = argparse.ArgumentParser(description="Query OpenAI")
         parser.add_argument("sources", type=Path, nargs="+")
-        parser.add_argument("-s", "--set", type=Path)
+        parser.add_argument("-t", "--task", default="default")
         parser.add_argument("--dest", type=Path, default=".")
         parser.add_argument("-c", "--config", type=Path)
         args = parser.parse_args(cmd_line_args)
 
         self.sources: list[Path] = args.sources
-        self.set: Optional[Path] = args.set
+        self.task: str = args.task
         self.dest: Optional[Path] = args.dest
         if args.config is None:
             args.config = Path(get_std_path(*COPYAID_CONFIG_FILE))
@@ -75,29 +77,29 @@ class Main:
         self.config = Config(args.config)
         self.api = LiveOpenAiApi(self.config.api_key_path())
 
-    def do_file(self, src_path: Path) -> None:
+    def do_file(self, settings: Any, src_path: Path) -> None:
         outpath = str(self.dest) + "/R{}/" + src_path.name
-        if Path(outpath.format(1)).exists():
-            print("Already exists", outpath.format(1))
-        else:
-            print("OpenAI query for", src_path)
-            with open(src_path) as file:
-                source_text = file.read()
-            request = make_openai_request(self.set, source_text)
-            response = self.api.query(request)
-            log_openai_query(src_path.stem, request, response, self.config.log_format)
-            print("Writing", outpath.format("*"))
-            revisions = list()
-            for choice in response.get("choices", []):
-                text = choice.get("message", {}).get("content")
-                revisions.append(text)
-            write_revisions(outpath, source_text, revisions)
+        print("OpenAI query for", src_path)
+        with open(src_path) as file:
+            source_text = file.read()
+        request = make_openai_request(settings, source_text)
+        response = self.api.query(request)
+        log_openai_query(src_path.stem, request, response, self.config.log_format)
+        print("Writing", outpath.format("*"))
+        revisions = list()
+        for choice in response.get("choices", []):
+            text = choice.get("message", {}).get("content")
+            revisions.append(text)
+        write_revisions(outpath, source_text, revisions)
 
     def run(self) -> int:
-        if self.set is None:
-            self.set = get_std_path(*QOAI_DEFAULT_SET_FILE)
+        settings = self.config.get_task_settings(self.task)
+        if settings is None:
+            msg = "Task '{}' not found in config '{}'"
+            print(msg.format(self.task, self.config.path), file=stderr)
+            return 1
         for s in self.sources:
-            self.do_file(s)
+            self.do_file(settings, s)
         return 0
 
 
