@@ -18,7 +18,7 @@ class MockApi:
     def query(self, req):
         ret = dict(
             created=1674259148,
-            choices=[dict(text=MOCK_COMPLETION)],
+            choices=[dict(message=dict(content=MOCK_COMPLETION))],
         )
         return ret
 
@@ -30,7 +30,6 @@ def test_main(tmp_path):
         str(srcpath),
         "--set", "set/proofread.xml",
         "--dest", str(tmp_path),
-        "--log", str(tmp_path),
         "--config", "tests/mock_config.toml",
     ])
     cli.api = MockApi()

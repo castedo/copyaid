@@ -7,8 +7,7 @@ name = "copyaid"
 version = "0.0.1"
 dependencies = [
     "openai",
-    "tomlkit",
-    "ruamel.yaml",
+    "toml",
 ]
 description = "Copy-edit with OpenAI from a CLI."
 requires-python = ">=3.9"
@@ -20,6 +19,11 @@ classifiers = [
 license = {file = "LICENSE"}
 authors = [
   { name="Castedo Ellerman", author_email = "castedo@castedo.com" },
+]
+
+[project.optional-dependencies]
+all = [
+  "jsoml",
 ]
 
 [project.urls]

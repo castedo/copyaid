@@ -2,7 +2,8 @@
 import json
 from pathlib import Path
 
-import openai, tomlkit
+import openai
+import toml  # type: ignore
 from typing import Optional
 
 
@@ -24,8 +25,11 @@ def read_settings_file(settings_path: Path) -> dict:
             return json.load(file)
         except json.JSONDecodeError:
             pass
-    import jsoml  # type: ignore
-    return jsoml.load(settings_path)
+    import jsoml
+    ret = jsoml.load(settings_path)
+    if not isinstance(ret, dict):
+        raise SyntaxError("CopyAId settings file XML root must be <obj>")
+    return ret
 
 
 def make_openai_request(settings_path, source):
@@ -44,8 +48,8 @@ class Config:
     def __init__(self, config_file: Path):
         self._file_path = config_file if config_file.exists() else None
         if self._file_path:
-            with open(self._file_path, "rb") as f:
-                self._data = dict(tomlkit.load(f))
+            with open(self._file_path, "r") as f:
+                self._data = dict(toml.load(f))
         else:
             self._data = dict()
 
@@ -58,3 +62,7 @@ class Config:
                 if not ret.is_absolute():
                     ret = self._file_path.parent / ret
         return ret
+
+    @property
+    def log_format(self):
+        return self._data.get("log_format")

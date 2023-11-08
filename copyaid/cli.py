@@ -5,41 +5,47 @@ from .diff import diffadapt
 import argparse, json, os
 from datetime import datetime
 from pathlib import Path
+from warnings import warn
+from typing import Optional, Union
 
+COPYAID_TMP_DIR = ("TMPDIR", "copyaid")
 COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/copyaid.toml")
+COPYAID_LOG_DIR = ("XDG_STATE_HOME", "copyaid/log")
 QOAI_DEFAULT_SET_FILE = ("XDG_CONFIG_HOME", "qoai/set/default")
-QOAI_LOG_DIR = ("XDG_STATE_HOME", "qoai/log")
 
-XDG_BASE_DIRS = dict(
+STD_BASE_DIRS = dict(
+    TMPDIR="/tmp",
     XDG_CONFIG_HOME="~/.config",
     XDG_STATE_HOME="~/.local/state",
 )
 
 
-def get_xdg_path(xdg_dir_var: str, subpath) -> Path:
-    base_dir = os.environ.get(xdg_dir_var)
+def get_std_path(env_var_name: str, subpath) -> Path:
+    base_dir = os.environ.get(env_var_name)
     if base_dir is None:
-        base_dir = XDG_BASE_DIRS[xdg_dir_var]
+        base_dir = STD_BASE_DIRS[env_var_name]
     return Path(base_dir).expanduser() / subpath
 
 
-def log_openai_query(name, request, response, log_path):
+def log_openai_query(name, request, response, log_format):
+    if not log_format:
+        return
     t = datetime.utcfromtimestamp(response["created"])
     ts = t.isoformat().replace("-", "").replace(":", "") + "Z"
     data = dict(request=request, response=response)
-    if log_path is None:
-        log_path = get_xdg_path(*QOAI_LOG_DIR)
-        os.makedirs(log_path, exist_ok=True)
+    log_path = get_std_path(*COPYAID_LOG_DIR)
+    os.makedirs(log_path, exist_ok=True)
     save_stem = name + "." + ts
     print("Saving OpenAI response", save_stem)
-    try:
-        import jsoml  # type: ignore
-
+    if log_format == "jsoml":
+        import jsoml
         jsoml.dump(data, log_path / (save_stem + ".xml"))
-    except ImportError:
+    elif log_format == "json":
         with open(log_path / (save_stem + ".json"), "w") as file:
             json.dump(data, file, indent=4, ensure_ascii=False)
             file.write("\n")
+    else:
+        warn("Unsupported log format: {}".format(log_format))
 
 
 def write_revisions(outpath_pattern, source, revisions):
@@ -52,22 +58,24 @@ def write_revisions(outpath_pattern, source, revisions):
 
 
 class Main:
-    def __init__(self, cmd_line_args = None):
+    def __init__(self, cmd_line_args: Optional[list[str]] = None):
         parser = argparse.ArgumentParser(description="Query OpenAI")
         parser.add_argument("sources", type=Path, nargs="+")
         parser.add_argument("-s", "--set", type=Path)
         parser.add_argument("--dest", type=Path, default=".")
-        parser.add_argument("--log", type=Path)
         parser.add_argument("-c", "--config", type=Path)
-        parser.parse_args(cmd_line_args, self)
+        args = parser.parse_args(cmd_line_args)
 
-        if self.config is None:
-            self.config = Path(get_xdg_path(*COPYAID_CONFIG_FILE))
-        self.config = Config(self.config)
-
+        self.sources: list[Path] = args.sources
+        self.set: Optional[Path] = args.set
+        self.dest: Optional[Path] = args.dest
+        if args.config is None:
+            args.config = Path(get_std_path(*COPYAID_CONFIG_FILE))
+        assert isinstance(args.config, Path)
+        self.config = Config(args.config)
         self.api = LiveOpenAiApi(self.config.api_key_path())
 
-    def do_file(self, src_path):
+    def do_file(self, src_path: Path) -> None:
         outpath = str(self.dest) + "/R{}/" + src_path.name
         if Path(outpath.format(1)).exists():
             print("Already exists", outpath.format(1))
@@ -77,21 +85,21 @@ class Main:
                 source_text = file.read()
             request = make_openai_request(self.set, source_text)
             response = self.api.query(request)
-            log_openai_query(src_path.stem, request, response, self.log)
+            log_openai_query(src_path.stem, request, response, self.config.log_format)
             print("Writing", outpath.format("*"))
             revisions = list()
-            for choice in response["choices"]:
-                text = choice["text"] if "text" in choice else choice["message"]["content"]
+            for choice in response.get("choices", []):
+                text = choice.get("message", {}).get("content")
                 revisions.append(text)
             write_revisions(outpath, source_text, revisions)
 
-    def run(self):
+    def run(self) -> int:
         if self.set is None:
-            self.set = get_xdg_path(*QOAI_DEFAULT_SET_FILE)
+            self.set = get_std_path(*QOAI_DEFAULT_SET_FILE)
         for s in self.sources:
             self.do_file(s)
         return 0
 
 
-def main(cmd_line_args = None):
+def main(cmd_line_args: Optional[list[str]] = None) -> int:
     return Main(cmd_line_args).run()
