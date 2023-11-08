@@ -1,35 +1,19 @@
 # Python Standard Library
-import json, os
+import json
 from pathlib import Path
 
-
-###############################################################################
-# Core code to query OpenAI API
-###############################################################################
-
-QOAI_OPENAI_API_KEY_FILE = ("XDG_CONFIG_HOME", "qoai/openai_api_key.txt")
-
-XDG_BASE_DIRS = dict(
-    XDG_CONFIG_HOME="~/.config",
-    XDG_STATE_HOME="~/.local/state",
-)
+import openai, tomlkit
+from typing import Optional
 
 
-def get_xdg_path(xdg_dir_var: str, subpath) -> Path:
-    base_dir = os.environ.get(xdg_dir_var)
-    if base_dir is None:
-        base_dir = XDG_BASE_DIRS[xdg_dir_var]
-    return Path(base_dir).expanduser() / subpath
+class LiveOpenAiApi:
+    def __init__(self, api_key_path: Optional[Path] = None):
+        if api_key_path is not None:
+            with open(api_key_path, 'r') as file:
+                openai.api_key = file.read().strip()
 
-
-def live_query_openai(req):
-    import openai
-
-    if openai.api_key is None:
-        key_path = get_xdg_path(*QOAI_OPENAI_API_KEY_FILE)
-        with open(key_path) as file:
-            openai.api_key = file.read().strip()
-    return openai.ChatCompletion.create(**req)
+    def query(self, req: dict) -> dict:
+        return openai.ChatCompletion.create(**req)
 
 
 def read_settings_file(settings_path: Path) -> dict:
@@ -54,3 +38,23 @@ def make_openai_request(settings_path, source):
         {"role": "user", "content": prompt},
     ]
     return ret
+
+
+class Config:
+    def __init__(self, config_file: Path):
+        self._file_path = config_file if config_file.exists() else None
+        if self._file_path:
+            with open(self._file_path, "rb") as f:
+                self._data = dict(tomlkit.load(f))
+        else:
+            self._data = dict()
+
+    def api_key_path(self) -> Optional[Path]:
+        ret = None
+        if self._file_path:
+            s = self._data.get("openai_api_key_file")
+            if s is not None:
+                ret = Path(str(s)).expanduser()
+                if not ret.is_absolute():
+                    ret = self._file_path.parent / ret
+        return ret

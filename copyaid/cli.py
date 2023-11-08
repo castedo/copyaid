@@ -1,4 +1,4 @@
-from .core import make_openai_request, live_query_openai, get_xdg_path
+from .core import make_openai_request, LiveOpenAiApi, Config
 from .diff import diffadapt
 
 # Python standard libraries
@@ -6,8 +6,21 @@ import argparse, json, os
 from datetime import datetime
 from pathlib import Path
 
+COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/copyaid.toml")
 QOAI_DEFAULT_SET_FILE = ("XDG_CONFIG_HOME", "qoai/set/default")
 QOAI_LOG_DIR = ("XDG_STATE_HOME", "qoai/log")
+
+XDG_BASE_DIRS = dict(
+    XDG_CONFIG_HOME="~/.config",
+    XDG_STATE_HOME="~/.local/state",
+)
+
+
+def get_xdg_path(xdg_dir_var: str, subpath) -> Path:
+    base_dir = os.environ.get(xdg_dir_var)
+    if base_dir is None:
+        base_dir = XDG_BASE_DIRS[xdg_dir_var]
+    return Path(base_dir).expanduser() / subpath
 
 
 def log_openai_query(name, request, response, log_path):
@@ -38,25 +51,6 @@ def write_revisions(outpath_pattern, source, revisions):
             file.write(out_text)
 
 
-def do_file(src_path, settings, outdir, log):
-    outpath = str(outdir) + "/R{}/" + src_path.name
-    if Path(outpath.format(1)).exists():
-        print("Already exists", outpath.format(1))
-    else:
-        print("OpenAI query for", src_path)
-        with open(src_path) as file:
-            source_text = file.read()
-        request = make_openai_request(settings, source_text)
-        response = live_query_openai(request)
-        log_openai_query(src_path.stem, request, response, log)
-        print("Writing", outpath.format("*"))
-        revisions = list()
-        for choice in response["choices"]:
-            text = choice["text"] if "text" in choice else choice["message"]["content"]
-            revisions.append(text)
-        write_revisions(outpath, source_text, revisions)
-
-
 class Main:
     def __init__(self, cmd_line_args = None):
         parser = argparse.ArgumentParser(description="Query OpenAI")
@@ -64,14 +58,40 @@ class Main:
         parser.add_argument("-s", "--set", type=Path)
         parser.add_argument("--dest", type=Path, default=".")
         parser.add_argument("--log", type=Path)
+        parser.add_argument("-c", "--config", type=Path)
         parser.parse_args(cmd_line_args, self)
+
+        if self.config is None:
+            self.config = Path(get_xdg_path(*COPYAID_CONFIG_FILE))
+        self.config = Config(self.config)
+
+        self.api = LiveOpenAiApi(self.config.api_key_path())
+
+    def do_file(self, src_path):
+        outpath = str(self.dest) + "/R{}/" + src_path.name
+        if Path(outpath.format(1)).exists():
+            print("Already exists", outpath.format(1))
+        else:
+            print("OpenAI query for", src_path)
+            with open(src_path) as file:
+                source_text = file.read()
+            request = make_openai_request(self.set, source_text)
+            response = self.api.query(request)
+            log_openai_query(src_path.stem, request, response, self.log)
+            print("Writing", outpath.format("*"))
+            revisions = list()
+            for choice in response["choices"]:
+                text = choice["text"] if "text" in choice else choice["message"]["content"]
+                revisions.append(text)
+            write_revisions(outpath, source_text, revisions)
 
     def run(self):
         if self.set is None:
             self.set = get_xdg_path(*QOAI_DEFAULT_SET_FILE)
         for s in self.sources:
-            do_file(s, self.set, self.dest, self.log)
+            self.do_file(s)
         return 0
+
 
 def main(cmd_line_args = None):
     return Main(cmd_line_args).run()
