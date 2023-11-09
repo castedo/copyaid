@@ -9,6 +9,9 @@ from pathlib import Path
 from warnings import warn
 from typing import Any, Optional, Union
 
+# max number of parallel revisions requested
+MAX_NUM_REVS = 7
+
 COPYAID_TMP_DIR = ("TMPDIR", "copyaid")
 COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/copyaid.toml")
 COPYAID_LOG_DIR = ("XDG_STATE_HOME", "copyaid/log")
@@ -61,7 +64,7 @@ def write_revisions(outpath_pattern: str, source: str, revisions: list[str]) -> 
 
 class Main:
     def __init__(self, cmd_line_args: Optional[list[str]] = None):
-        parser = argparse.ArgumentParser(description="Query OpenAI")
+        parser = argparse.ArgumentParser(description="CopyAid")
         parser.add_argument("sources", type=Path, nargs="+")
         parser.add_argument("-t", "--task", default="default")
         parser.add_argument("--dest", type=Path, default=".")
@@ -98,6 +101,12 @@ class Main:
             msg = "Task '{}' not found in config '{}'"
             print(msg.format(self.task, self.config.path), file=stderr)
             return 1
+        num_revs = settings.get("n", 1)
+        if num_revs > MAX_NUM_REVS:
+            settings["n"] = MAX_NUM_REVS
+            msg = "{} revisions requested, changed to max {}"
+            warn(msg.format(num_revs, MAX_NUM_REVS))
+        
         for s in self.sources:
             self.do_file(settings, s)
         return 0

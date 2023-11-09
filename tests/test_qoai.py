@@ -33,7 +33,7 @@ def test_main(tmp_path):
         "--config", "tests/mock_config.toml",
     ])
     cli.api = MockApi()
-    cli.run()
+    assert cli.run() == 0
     got = open(tmp_path / "R1" / srcpath.name).read()
     assert got == EXPECTED_TEXT
 
