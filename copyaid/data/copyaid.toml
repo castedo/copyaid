@@ -13,3 +13,4 @@ openai_api_key_file = "openai_api_key.txt"
 [tasks]
 it = { request = "cold-revise.toml", after = "diff -qs" }
 diff = { after = "vimdiff" }
+where = { after = "echo" }

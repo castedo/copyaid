@@ -2,7 +2,7 @@ from .core import make_openai_request, LiveOpenAiApi, Config
 from .diff import diffadapt
 
 # Python standard libraries
-import argparse, json, os
+import argparse, json, os, subprocess
 from sys import stderr
 from datetime import datetime
 from pathlib import Path
@@ -53,13 +53,15 @@ def log_openai_query(
         warn("Unsupported log format: {}".format(log_format))
 
 
-def write_revisions(outpath_pattern: str, source: str, revisions: list[str]) -> None:
+def write_revisions(rev_paths: list[Path], source: str, revisions: list[str]) -> None:
     revisions = diffadapt(source, revisions)  # type: ignore
-    for i, out_text in enumerate(revisions):
-        path = Path(outpath_pattern.format(i + 1))
-        os.makedirs(path.parent, exist_ok=True)
-        with open(path, "w") as file:
-            file.write(out_text)
+    for i, path in enumerate(rev_paths):
+        if i < len(revisions):
+            os.makedirs(path.parent, exist_ok=True)
+            with open(path, "w") as file:
+                file.write(revisions[i])
+        else:
+            path.unlink(missing_ok=True)
 
 
 class Main:
@@ -67,33 +69,45 @@ class Main:
         parser = argparse.ArgumentParser(description="CopyAid")
         parser.add_argument("task")
         parser.add_argument("sources", type=Path, nargs="+")
-        parser.add_argument("--dest", type=Path, default=".")
+        parser.add_argument("-d", "--dest", type=Path)
         parser.add_argument("-c", "--config", type=Path)
         args = parser.parse_args(cmd_line_args)
 
         self.sources: list[Path] = args.sources
         self.task: str = args.task
-        self.dest: Optional[Path] = args.dest
+        self.dest: Path = args.dest or Path(get_std_path(*COPYAID_TMP_DIR))
         if args.config is None:
             args.config = Path(get_std_path(*COPYAID_CONFIG_FILE))
         assert isinstance(args.config, Path)
         self.config = Config(args.config)
         self.api = LiveOpenAiApi(self.config.api_key_path())
 
+    def _rev_paths(self, src_path: Path) -> list[Path]:
+        ret = list()
+        pattern = str(self.dest) + "/R{}/" + src_path.name
+        for i in range(MAX_NUM_REVS):
+            ret.append(Path(pattern.format(i + 1)))
+        return ret
+
     def do_file(self, settings: Any, src_path: Path) -> None:
-        outpath = str(self.dest) + "/R{}/" + src_path.name
         print("OpenAI query for", src_path)
         with open(src_path) as file:
             source_text = file.read()
         request = make_openai_request(settings, source_text)
         response = self.api.query(request)
         log_openai_query(src_path.stem, request, response, self.config.log_format)
-        print("Writing", outpath.format("*"))
+        print("Writing to", self.dest)
         revisions = list()
         for choice in response.get("choices", []):
             text = choice.get("message", {}).get("content")
             revisions.append(text)
-        write_revisions(outpath, source_text, revisions)
+        write_revisions(self._rev_paths(src_path), source_text, revisions)
+
+    def do_after(self, after_cmd: str, src_path: Path) -> None:
+        found_revs = [str(p) for p in self._rev_paths(src_path) if p.exists()]
+        if found_revs:
+            cmdline = " ".join([after_cmd, str(src_path)] + found_revs)
+            subprocess.run(cmdline, check=True, shell=True)
 
     def run(self) -> int:
         task = self.config.get_task(self.task)
@@ -102,14 +116,17 @@ class Main:
             print(msg.format(self.task, self.config.path), file=stderr)
             return 1
         (settings, after) = task
-        num_revs = settings.get("n", 1)
-        if num_revs > MAX_NUM_REVS:
-            settings["n"] = MAX_NUM_REVS
-            msg = "{} revisions requested, changed to max {}"
-            warn(msg.format(num_revs, MAX_NUM_REVS))
-        
-        for s in self.sources:
-            self.do_file(settings, s)
+        if settings is not None:
+            num_revs = settings.get("n", 1)
+            if num_revs > MAX_NUM_REVS:
+                settings["n"] = MAX_NUM_REVS
+                msg = "{} revisions requested, changed to max {}"
+                warn(msg.format(num_revs, MAX_NUM_REVS))
+            for s in self.sources:
+                    self.do_file(settings, s)
+        if after is not None:
+            for s in self.sources:
+                self.do_after(after, s)    
         return 0
 
 
