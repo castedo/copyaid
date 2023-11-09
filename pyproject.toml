@@ -7,7 +7,7 @@ name = "copyaid"
 version = "0.0.1"
 dependencies = [
     "openai",
-    "toml",
+    "tomli",
 ]
 description = "Copy-edit with OpenAI from a CLI."
 requires-python = ">=3.9"

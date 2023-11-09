@@ -1,4 +1,15 @@
+# Put the contents of your OpenAI API key in the file identified by openai_api_key_file:
 openai_api_key_file = "openai_api_key.txt"
+# Or alternatively, you can comment out the openai_api_key_file line
+# and instead set the OPENAI_API_KEY environment variable to your key contents.
 
+# Optionally, you can log all requests sent and responses received to the OpenAI API.
+# Uncomment one of the following log_format lines based on your preferred format.
+# log_format = "json"
+# log_format = "jsoml"
+
+# If request is not set for a task, no request is made to the OpenAI API,
+# and only the after command will be run on previously saved revisions.
 [tasks]
-it = "cold-revise.toml"
+it = { request = "cold-revise.toml", after = "diff -qs" }
+diff = { after = "vimdiff" }

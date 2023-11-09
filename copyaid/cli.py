@@ -65,8 +65,8 @@ def write_revisions(outpath_pattern: str, source: str, revisions: list[str]) -> 
 class Main:
     def __init__(self, cmd_line_args: Optional[list[str]] = None):
         parser = argparse.ArgumentParser(description="CopyAid")
+        parser.add_argument("task")
         parser.add_argument("sources", type=Path, nargs="+")
-        parser.add_argument("-t", "--task", default="default")
         parser.add_argument("--dest", type=Path, default=".")
         parser.add_argument("-c", "--config", type=Path)
         args = parser.parse_args(cmd_line_args)
@@ -96,11 +96,12 @@ class Main:
         write_revisions(outpath, source_text, revisions)
 
     def run(self) -> int:
-        settings = self.config.get_task_settings(self.task)
-        if settings is None:
+        task = self.config.get_task(self.task)
+        if task is None:
             msg = "Task '{}' not found in config '{}'"
             print(msg.format(self.task, self.config.path), file=stderr)
             return 1
+        (settings, after) = task
         num_revs = settings.get("n", 1)
         if num_revs > MAX_NUM_REVS:
             settings["n"] = MAX_NUM_REVS

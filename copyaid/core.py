@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 import openai
-import toml  # type: ignore
+import tomli
 from typing import Any, Optional
 
 
@@ -37,8 +37,8 @@ def make_openai_request(settings: Any, source: str) -> Any:
 class Config:
     def __init__(self, config_file: Path):
         if config_file.exists():
-            with open(config_file, "r") as f:
-                self._data = dict(toml.load(f))
+            with open(config_file, "rb") as file:
+                self._data = tomli.load(file)
         else:
             self._data = dict()
         self.path = config_file
@@ -59,11 +59,14 @@ class Config:
     def log_format(self) -> Optional[str]:
         return self._data.get("log_format")
 
-    def get_task_settings(self, task_name: str) -> Any:
-        s = self._data.get("tasks", {}).get(task_name)
-        p = self._resolve_path(s)
-        if p is None:
+    def get_task(self, task_name: str) -> Optional[tuple[Any, str]]:
+        task = self._data.get("tasks", {}).get(task_name)
+        if task is None:
             return None
+        path = self._resolve_path(task.get("request"))
+        if path is None:
+            settings = None
         else:
-            with open(p, 'r') as file:
-                return dict(toml.load(file))
+            with open(path, "rb") as file:
+                settings = tomli.load(file)
+        return (settings, task.get("after"))

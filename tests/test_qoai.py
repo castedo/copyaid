@@ -27,8 +27,8 @@ def test_main(tmp_path):
     srcpath = tmp_path / "source.txt"
     open(srcpath, "w").write(SOURCE_TEXT)
     cli = copyaid.cli.Main([
+        "proof",
         str(srcpath),
-        "--task", "proof",
         "--dest", str(tmp_path),
         "--config", "tests/mock_config.toml",
     ])
