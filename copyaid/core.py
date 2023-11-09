@@ -17,21 +17,6 @@ class LiveOpenAiApi:
         return openai.ChatCompletion.create(**req)  # type: ignore
 
 
-def read_settings_file(settings_path: Path) -> Any:
-    with open(settings_path, 'rb') as file:
-        if settings_path.suffix == ".json":
-            return json.load(file)
-        try:
-            return json.load(file)
-        except json.JSONDecodeError:
-            pass
-    import jsoml
-    ret = jsoml.load(settings_path)
-    if not isinstance(ret, dict):
-        raise SyntaxError("CopyAId settings file XML root must be <obj>")
-    return ret
-
-
 def make_openai_request(settings: Any, source: str) -> Any:
     ret = settings["openai"]
     ret["max_tokens"] = int(settings["max_tokens_ratio"] * len(source) / 4)
@@ -77,4 +62,8 @@ class Config:
     def get_task_settings(self, task_name: str) -> Any:
         s = self._data.get("tasks", {}).get(task_name)
         p = self._resolve_path(s)
-        return None if p is None else read_settings_file(p)
+        if p is None:
+            return None
+        else:
+            with open(p, 'r') as file:
+                return dict(toml.load(file))

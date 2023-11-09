@@ -1,0 +1,21 @@
+chat_system = "You are a helpful assistant."
+
+prepend = '''
+Revise and correct errors in the following text.
+Improve readability by using standard English and keeping sentences concise.
+Preserve any embedded Markdown and HTML.
+Reply with only the revised text.
+The original text to revise is:
+"""
+'''
+
+append = '''
+"""
+'''
+
+max_tokens_ratio = 1.25
+
+[openai]
+n = 1
+temperature = 0
+model = "gpt-3.5-turbo"
