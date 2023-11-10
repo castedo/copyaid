@@ -18,22 +18,23 @@ def main(cmd_line_args: Optional[list[str]] = None) -> int:
     parser.add_argument("-c", "--config", type=Path)
     (args, rest) = parser.parse_known_args(cmd_line_args)
 
-    if args.config is None:
-        args.config = Path(get_std_path(*COPYAID_CONFIG_FILE))
-    elif args.config.is_dir():
-        args.config = args.config / COPYAID_CONFIG_FILENAME
-    assert isinstance(args.config, Path)
-    if not args.config.exists():
+    config_path = args.config or Path(get_std_path(*COPYAID_CONFIG_FILE))
+    if config_path.is_dir():
+        config_path = config_path / COPYAID_CONFIG_FILENAME
+    if not config_path.exists():
         if rest == ["init"]:
-            copy_package_file(COPYAID_CONFIG_FILENAME, args.config)
-            copy_package_file("cold-revise.toml", args.config.parent)
+            copy_package_file(COPYAID_CONFIG_FILENAME, config_path)
+            copy_package_file("cold-revise.toml", config_path.parent)
             return 0
         else:
-            msg = "Config file '{}' not found, run:\n  {} --config '{}' init\n"
-            stderr.write(msg.format(args.config, parser.prog, args.config))
+            print(f"Config file '{config_path}' not found, run:", file=stderr)
+            if args.config is None:
+                print(f"  {parser.prog} init", file=stderr)
+            else:
+                print(f"  {parser.prog} --config '{args.config}' init", file=stderr)
             return 1
 
-    config = Config(args.config)
+    config = Config(config_path)
     parser.add_argument("task", choices=config.task_names)
     parser.add_argument("-d", "--dest", type=Path)
     parser.add_argument("source", type=Path, nargs="+")

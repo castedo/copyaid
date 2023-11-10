@@ -104,7 +104,7 @@ class ApiProxy:
         for choice in response.get("choices", []):
             text = choice.get("message", {}).get("content")
             revisions.append(text)
-        return diffadapt(source_text, revisions)  # type: ignore
+        return diffadapt(source_text, revisions)
 
     def log_openai_query(self, name: str, request: Any, response: Any) -> None:
         if not self.log_format:
