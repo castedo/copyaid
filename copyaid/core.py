@@ -36,11 +36,8 @@ def make_openai_request(settings: Any, source: str) -> Any:
 
 class Config:
     def __init__(self, config_file: Path):
-        if config_file.exists():
-            with open(config_file, "rb") as file:
-                self._data = tomli.load(file)
-        else:
-            self._data = dict()
+        with open(config_file, "rb") as file:
+            self._data = tomli.load(file)
         self.path = config_file
 
     def _resolve_path(self, s: Any) -> Optional[Path]:

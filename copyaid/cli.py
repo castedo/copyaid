@@ -2,9 +2,10 @@ from .core import make_openai_request, LiveOpenAiApi, Config
 from .diff import diffadapt
 
 # Python standard libraries
-import argparse, json, os, subprocess
+import argparse, json, os, shutil, subprocess
 from sys import stderr
 from datetime import datetime
+from importlib import resources
 from pathlib import Path
 from warnings import warn
 from typing import Any, Optional, Union
@@ -13,7 +14,8 @@ from typing import Any, Optional, Union
 MAX_NUM_REVS = 7
 
 COPYAID_TMP_DIR = ("TMPDIR", "copyaid")
-COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/copyaid.toml")
+COPYAID_CONFIG_FILENAME = "copyaid.toml"
+COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/" + COPYAID_CONFIG_FILENAME)
 COPYAID_LOG_DIR = ("XDG_STATE_HOME", "copyaid/log")
 
 STD_BASE_DIRS = dict(
@@ -64,23 +66,15 @@ def write_revisions(rev_paths: list[Path], source: str, revisions: list[str]) ->
             path.unlink(missing_ok=True)
 
 
-class Main:
-    def __init__(self, cmd_line_args: Optional[list[str]] = None):
-        parser = argparse.ArgumentParser(description="CopyAid")
-        parser.add_argument("task")
-        parser.add_argument("sources", type=Path, nargs="+")
-        parser.add_argument("-d", "--dest", type=Path)
-        parser.add_argument("-c", "--config", type=Path)
-        args = parser.parse_args(cmd_line_args)
+class CopyAid:
+    ApiClass = LiveOpenAiApi
 
-        self.sources: list[Path] = args.sources
+    def __init__(self, config: Config, args: Any):
+        self.sources: list[Path] = args.source
         self.task: str = args.task
         self.dest: Path = args.dest or Path(get_std_path(*COPYAID_TMP_DIR))
-        if args.config is None:
-            args.config = Path(get_std_path(*COPYAID_CONFIG_FILE))
-        assert isinstance(args.config, Path)
-        self.config = Config(args.config)
-        self.api = LiveOpenAiApi(self.config.api_key_path())
+        self.config = config
+        self.api = CopyAid.ApiClass(config.api_key_path())
 
     def _rev_paths(self, src_path: Path) -> list[Path]:
         ret = list()
@@ -130,5 +124,38 @@ class Main:
         return 0
 
 
+def copy_package_file(filename: str, dest: Path) -> None:
+    rp = resources.files(__package__).joinpath("data").joinpath(filename)
+    with resources.as_file(rp) as filepath:
+        os.makedirs(dest.parent, exist_ok=True)
+        shutil.copy(filepath, dest)
+
+
 def main(cmd_line_args: Optional[list[str]] = None) -> int:
-    return Main(cmd_line_args).run()
+    parser = argparse.ArgumentParser(description="CopyAid", prog="copyaid")
+    parser.add_argument("-c", "--config", type=Path)
+    (args, rest) = parser.parse_known_args(cmd_line_args)
+
+    if args.config is None:
+        args.config = Path(get_std_path(*COPYAID_CONFIG_FILE))
+    elif args.config.is_dir():
+        args.config = args.config / COPYAID_CONFIG_FILENAME
+    assert isinstance(args.config, Path)
+    if not args.config.exists():
+        if rest == ["init"]:
+            copy_package_file(COPYAID_CONFIG_FILENAME, args.config)
+            copy_package_file("cold-revise.toml", args.config.parent)
+            return 0
+        else:
+            msg = "Config file missing, run:\n  {} --config {} init\n"
+            stderr.write(msg.format(parser.prog, args.config))
+            return 1
+
+    config = Config(args.config)
+
+    parser.add_argument("-d", "--dest", type=Path)
+    parser.add_argument("task")
+    parser.add_argument("source", type=Path, nargs="+")
+    parser.parse_args(cmd_line_args, args)
+
+    return CopyAid(config, args).run()

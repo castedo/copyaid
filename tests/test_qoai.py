@@ -15,6 +15,9 @@ MOCK_COMPLETION = "Jupiter is a big planet made of gas."
 EXPECTED_TEXT = "Jupiter is\na big planet\nmade of gas.\n"
 
 class MockApi:
+    def __init__(self, api_key_path):
+        pass
+
     def query(self, req):
         ret = dict(
             created=1674259148,
@@ -22,18 +25,18 @@ class MockApi:
         )
         return ret
 
+copyaid.cli.CopyAid.ApiClass = MockApi
 
 def test_main(tmp_path):
     srcpath = tmp_path / "source.txt"
     open(srcpath, "w").write(SOURCE_TEXT)
-    cli = copyaid.cli.Main([
+    retcode = copyaid.cli.main([
         "proof",
         str(srcpath),
         "--dest", str(tmp_path),
         "--config", "tests/mock_config.toml",
     ])
-    cli.api = MockApi()
-    assert cli.run() == 0
+    assert retcode == 0
     got = open(tmp_path / "R1" / srcpath.name).read()
     assert got == EXPECTED_TEXT
 
