@@ -1,10 +1,13 @@
-# Python Standard Library
-import json
-from pathlib import Path
-
 import openai
 import tomli
-from typing import Any, Optional
+
+# Python Standard Library
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from warnings import warn
+
+from typing import Any, Iterable, Optional
 
 
 class LiveOpenAiApi:
@@ -35,6 +38,19 @@ def make_openai_request(settings: Any, source: str) -> Any:
 
 
 class Config:
+    @dataclass
+    class Task:
+        settings: Any
+        react: str
+
+        def cap_num_rev(self, max_num_revs: int) -> None:
+            if self.settings is not None:
+                num_revs = self.settings.get("n", 1)
+                if num_revs > max_num_revs:
+                    self.settings["n"] = max_num_revs
+                    msg = "{} revisions requested, changed to max {}"
+                    warn(msg.format(num_revs, max_num_revs))
+
     def __init__(self, config_file: Path):
         with open(config_file, "rb") as file:
             self._data = tomli.load(file)
@@ -56,7 +72,13 @@ class Config:
     def log_format(self) -> Optional[str]:
         return self._data.get("log_format")
 
-    def get_task(self, task_name: str) -> Optional[tuple[Any, str]]:
+    @property
+    def task_names(self) -> Iterable[str]:
+        tasks = self._data.get("tasks", {})
+        assert isinstance(tasks, dict)
+        return tasks.keys()
+
+    def get_task(self, task_name: str) -> Optional[Task]:
         task = self._data.get("tasks", {}).get(task_name)
         if task is None:
             return None
@@ -66,4 +88,4 @@ class Config:
         else:
             with open(path, "rb") as file:
                 settings = tomli.load(file)
-        return (settings, task.get("after"))
+        return Config.Task(settings, task.get("react"))

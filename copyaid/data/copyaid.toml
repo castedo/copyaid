@@ -8,9 +8,10 @@ openai_api_key_file = "openai_api_key.txt"
 # log_format = "json"
 # log_format = "jsoml"
 
-# If request is not set for a task, no request is made to the OpenAI API,
-# and only the after command will be run on previously saved revisions.
+# For each task:
+# 1) OpenAI API request will be made if settings file provided, and/or
+# 2) react command will be run on latest revisions.
 [tasks]
-it = { request = "cold-revise.toml", after = "diff -qs" }
-diff = { after = "vimdiff" }
-where = { after = "echo" }
+it = { request = "cold-revise.toml", react = "diff -qs" }
+diff = { react = "vimdiff" }
+where = { react = "echo" }

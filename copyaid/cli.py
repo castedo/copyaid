@@ -1,11 +1,11 @@
+from .util import get_std_path, copy_package_file
 from .core import make_openai_request, LiveOpenAiApi, Config
 from .diff import diffadapt
 
 # Python standard libraries
-import argparse, json, os, shutil, subprocess
+import argparse, json, os, subprocess
 from sys import stderr
 from datetime import datetime
-from importlib import resources
 from pathlib import Path
 from warnings import warn
 from typing import Any, Optional, Union
@@ -17,19 +17,6 @@ COPYAID_TMP_DIR = ("TMPDIR", "copyaid")
 COPYAID_CONFIG_FILENAME = "copyaid.toml"
 COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/" + COPYAID_CONFIG_FILENAME)
 COPYAID_LOG_DIR = ("XDG_STATE_HOME", "copyaid/log")
-
-STD_BASE_DIRS = dict(
-    TMPDIR="/tmp",
-    XDG_CONFIG_HOME="~/.config",
-    XDG_STATE_HOME="~/.local/state",
-)
-
-
-def get_std_path(env_var_name: str, subpath: str) -> Path:
-    base_dir = os.environ.get(env_var_name)
-    if base_dir is None:
-        base_dir = STD_BASE_DIRS[env_var_name]
-    return Path(base_dir).expanduser() / subpath
 
 
 def log_openai_query(
@@ -69,12 +56,10 @@ def write_revisions(rev_paths: list[Path], source: str, revisions: list[str]) ->
 class CopyAid:
     ApiClass = LiveOpenAiApi
 
-    def __init__(self, config: Config, args: Any):
-        self.sources: list[Path] = args.source
-        self.task: str = args.task
-        self.dest: Path = args.dest or Path(get_std_path(*COPYAID_TMP_DIR))
+    def __init__(self, config: Config, dest: Path):
         self.config = config
-        self.api = CopyAid.ApiClass(config.api_key_path())
+        self.dest = dest
+        self._api: Any = None
 
     def _rev_paths(self, src_path: Path) -> list[Path]:
         ret = list()
@@ -83,12 +68,14 @@ class CopyAid:
             ret.append(Path(pattern.format(i + 1)))
         return ret
 
-    def do_file(self, settings: Any, src_path: Path) -> None:
+    def do_request(self, settings: Any, src_path: Path) -> None:
         print("OpenAI query for", src_path)
         with open(src_path) as file:
             source_text = file.read()
         request = make_openai_request(settings, source_text)
-        response = self.api.query(request)
+        if self._api is None:
+            self._api = CopyAid.ApiClass(self.config.api_key_path())
+        response = self._api.query(request)
         log_openai_query(src_path.stem, request, response, self.config.log_format)
         print("Writing to", self.dest)
         revisions = list()
@@ -97,38 +84,11 @@ class CopyAid:
             revisions.append(text)
         write_revisions(self._rev_paths(src_path), source_text, revisions)
 
-    def do_after(self, after_cmd: str, src_path: Path) -> None:
+    def do_react(self, cmd: str, src_path: Path) -> None:
         found_revs = [str(p) for p in self._rev_paths(src_path) if p.exists()]
         if found_revs:
-            cmdline = " ".join([after_cmd, str(src_path)] + found_revs)
+            cmdline = " ".join([cmd, str(src_path)] + found_revs)
             subprocess.run(cmdline, check=True, shell=True)
-
-    def run(self) -> int:
-        task = self.config.get_task(self.task)
-        if task is None:
-            msg = "Task '{}' not found in config '{}'"
-            print(msg.format(self.task, self.config.path), file=stderr)
-            return 1
-        (settings, after) = task
-        if settings is not None:
-            num_revs = settings.get("n", 1)
-            if num_revs > MAX_NUM_REVS:
-                settings["n"] = MAX_NUM_REVS
-                msg = "{} revisions requested, changed to max {}"
-                warn(msg.format(num_revs, MAX_NUM_REVS))
-            for s in self.sources:
-                    self.do_file(settings, s)
-        if after is not None:
-            for s in self.sources:
-                self.do_after(after, s)    
-        return 0
-
-
-def copy_package_file(filename: str, dest: Path) -> None:
-    rp = resources.files(__package__).joinpath("data").joinpath(filename)
-    with resources.as_file(rp) as filepath:
-        os.makedirs(dest.parent, exist_ok=True)
-        shutil.copy(filepath, dest)
 
 
 def main(cmd_line_args: Optional[list[str]] = None) -> int:
@@ -147,15 +107,31 @@ def main(cmd_line_args: Optional[list[str]] = None) -> int:
             copy_package_file("cold-revise.toml", args.config.parent)
             return 0
         else:
-            msg = "Config file missing, run:\n  {} --config {} init\n"
-            stderr.write(msg.format(parser.prog, args.config))
+            msg = "Config file '{}' not found, run:\n  {} --config '{}' init\n"
+            stderr.write(msg.format(args.config, parser.prog, args.config))
             return 1
 
     config = Config(args.config)
-
+    parser.add_argument("task", choices=config.task_names)
     parser.add_argument("-d", "--dest", type=Path)
-    parser.add_argument("task")
     parser.add_argument("source", type=Path, nargs="+")
     parser.parse_args(cmd_line_args, args)
 
-    return CopyAid(config, args).run()
+    if args.dest is None:
+        args.dest = Path(get_std_path(*COPYAID_TMP_DIR))
+
+    task = config.get_task(args.task)
+    if task is None:
+        msg = "Task '{}' not found in config '{}'"
+        print(msg.format(args.task, config.path), file=stderr)
+        return 1
+    task.cap_num_rev(MAX_NUM_REVS)
+
+    aid = CopyAid(config, args.dest)
+    if task.settings is not None:
+        for s in args.source:
+            aid.do_request(task.settings, s)
+    if task.react is not None:
+        for s in args.source:
+            aid.do_react(task.react, s)
+    return 0
