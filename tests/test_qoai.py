@@ -25,7 +25,7 @@ class MockApi:
         )
         return ret
 
-copyaid.cli.CopyAid.ApiClass = MockApi
+copyaid.core.ApiProxy.ApiClass = MockApi
 
 def test_main(tmp_path):
     srcpath = tmp_path / "source.txt"
