@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
+import tomli
+
 # Python Standard Library
 import filecmp, os, subprocess
-import jsoml
 from pathlib import Path
 from contextlib import chdir
 
@@ -10,13 +11,14 @@ CASES_DIR = Path(__file__).parent / "cases"
 
 
 def assert_cold_settings(settings_path):
-    settings = jsoml.load(Path(settings_path))
+    with open(Path(settings_path), "rb") as file:
+        settings = tomli.load(file)
     assert settings["openai"]["n"] == 1
     assert settings["openai"]["temperature"] == 0
 
 
 def copyaidit(src_path):
-    cmdline = ["copyaidit.py", "-s", "settings.xml", src_path]
+    cmdline = ["copyaid", "-c=.", "it", "-d=.", src_path]
     print(cmdline)
     subprocess.run(cmdline)
     return Path("R1") / src_path.name
@@ -25,7 +27,7 @@ def copyaidit(src_path):
 def blast_test_case(case_path: Path):
     print(case_path)
     with chdir(case_path):
-        assert_cold_settings("settings.xml")
+        assert_cold_settings("settings.toml")
         for group in os.listdir("input"):
             print(group)
             for filename in os.listdir(case_path / "input" / group):
