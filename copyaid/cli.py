@@ -42,14 +42,20 @@ def main(cmd_line_args: Optional[list[str]] = None) -> int:
 
     if args.dest is None:
         args.dest = Path(get_std_path(*COPYAID_TMP_DIR))
+    exit_code = 0
     task = Task(args.dest, config.get_task(args.task))
-    if task.settings is not None:
+    if task.settings is None:
+        api = None
+    else:
         api = ApiProxy(config, get_std_path(*COPYAID_LOG_DIR))
-        for s in args.source:
-            print("OpenAI query for", s)
-            revisions = api.do_request(task.settings, s)
-            print("Writing to", task.dest)
-            task.write_revisions(s, revisions)
+    exit_code = 0
     for s in args.source:
-        task.do_react(s)
-    return 0
+        if api:
+            print("OpenAI request for", s)
+            revisions = api.do_request(task.settings, s)
+            print("Saving to", task.dest)
+            task.write_revisions(s, revisions)
+        exit_code = task.do_react(s)
+        if exit_code:
+            break
+    return exit_code

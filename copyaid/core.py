@@ -83,7 +83,14 @@ class Config:
         else:
             with open(path, "rb") as file:
                 settings = tomli.load(file)
-        return Config.Task(settings, task.get("react"))
+        react = task.get("react")
+        if react is not None:
+            cmd = self._data.get("commands", {}).get(react)
+            if cmd is None:
+                msg = f"Command '{react}' not found in {self.path}"
+                raise SyntaxError(msg)
+            react = cmd
+        return Config.Task(settings, react)
 
 
 class ApiProxy:
@@ -114,7 +121,7 @@ class ApiProxy:
         data = dict(request=request, response=response)
         os.makedirs(self.log_path, exist_ok=True)
         save_stem = name + "." + ts
-        print("Saving OpenAI response", save_stem)
+        print("Logging OpenAI response", save_stem)
         if self.log_format == "jsoml":
             import jsoml
             jsoml.dump(data, self.log_path / (save_stem + ".xml"))
@@ -156,9 +163,12 @@ class Task:
             else:
                 path.unlink(missing_ok=True)
 
-    def do_react(self, src_path: Path) -> None:
+    def do_react(self, src_path: Path) -> int:
+        ret = 0
         if self.react is not None:
             found_revs = [str(p) for p in self._rev_paths(src_path) if p.exists()]
             if found_revs:
-                cmdline = " ".join([self.react, str(src_path)] + found_revs)
-                subprocess.run(cmdline, check=True, shell=True)
+                args = [self.react] + [str(src_path)] + found_revs
+                proc = subprocess.run(args, shell=True)
+                ret = proc.returncode
+        return ret
