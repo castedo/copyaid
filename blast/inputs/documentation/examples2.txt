@@ -1,0 +1,9 @@
+After the software has been installed, the computer can be started.
+
+The Configuration is saved when you click OK.
+
+A server is created by you.
+
+To view the document, please click View.
+
+For more information, please see the document.
