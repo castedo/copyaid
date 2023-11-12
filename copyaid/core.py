@@ -1,5 +1,3 @@
-from .diff import diffadapt
-
 import openai
 import tomli
 
@@ -44,7 +42,7 @@ class Config:
     @dataclass
     class Task:
         settings: Any
-        react: Optional[str]
+        react: list[str]
 
     def __init__(self, config_file: Path):
         with open(config_file, "rb") as file:
@@ -73,13 +71,16 @@ class Config:
         assert isinstance(tasks, dict)
         return tasks.keys()
 
-    def _react_as_command(self, react: Optional[str]) -> Optional[str]:
-        ret = None
-        if react is not None:
-            ret = self._data.get("commands", {}).get(react)
-            if ret is None:
-                msg = f"Command '{react}' not found in {self.path}"
+    def _react_as_commands(self, react: Any) -> list[str]:
+        ret = list()
+        if isinstance(react, str):
+            react = [react]
+        for r in react:
+            cmd = self._data.get("commands", {}).get(r)
+            if cmd is None:
+                msg = f"Command '{r}' not found in {self.path}"
                 raise SyntaxError(msg)
+            ret.append(cmd)
         return ret
 
     def get_task(self, task_name: str) -> Optional[Task]:
@@ -92,7 +93,7 @@ class Config:
         else:
             with open(path, "rb") as file:
                 settings = tomli.load(file)
-        react = self._react_as_command(task.get("react"))
+        react = self._react_as_commands(task.get("react"))
         return Config.Task(settings, react)
 
     def help(self) -> str:
@@ -108,17 +109,18 @@ class Config:
                 buf.write("    Request settings: ")
                 buf.write(str(path))
                 buf.write("\n")
-            react = self._react_as_command(task.get("react"))
+            react = self._react_as_commands(task.get("react"))
             if react:
-                buf.write("    React command: ")
-                buf.write(help_example_react(react))
+                buf.write("    React command chain:\n")
+                for r in react:
+                    buf.write("      ")
+                    buf.write(help_example_react(r))
             buf.write("\n")
         return buf.getvalue()
 
 
-def help_example_react(react: str) -> str:
-    cmd = "echo " + react
-    args = [cmd] + ["<source>", "<rev1>", "<rev2>", "<rev3>"]
+def help_example_react(cmd: str) -> str:
+    args = ["echo " + cmd] + ["<source>", "<rev1>", "<rev2>", "<rev3>"]
     proc = subprocess.run(args, shell=True, stdout=subprocess.PIPE)
     return proc.stdout.decode('utf-8')
 
@@ -141,7 +143,7 @@ class ApiProxy:
         for choice in response.get("choices", []):
             text = choice.get("message", {}).get("content")
             revisions.append(text)
-        return diffadapt(source_text, revisions)
+        return revisions
 
     def log_openai_query(self, name: str, request: Any, response: Any) -> None:
         if not self.log_format:
@@ -198,7 +200,10 @@ class Task:
         if self.react is not None:
             found_revs = [str(p) for p in self._rev_paths(src_path) if p.exists()]
             if found_revs:
-                args = [self.react] + [str(src_path)] + found_revs
-                proc = subprocess.run(args, shell=True)
-                ret = proc.returncode
+                args = [str(src_path)] + found_revs
+                for cmd in self.react:
+                    proc = subprocess.run([cmd] + args, shell=True)
+                    ret = proc.returncode
+                    if ret:
+                        break;
         return ret

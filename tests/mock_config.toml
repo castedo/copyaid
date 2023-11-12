@@ -1,4 +1,8 @@
 openai_api_key_file = "mock_api_key.txt"
 
-[tasks]
-proof = { request = "../copyaid/data/cold-revise.toml" }
+[tasks.proof]
+request = "../copyaid/data/cold-revise.toml"
+react = ["diffadapt"]
+
+[commands]
+diffadapt = 'diffadapt "$0" "$@"'

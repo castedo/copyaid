@@ -12,15 +12,27 @@ openai_api_key_file = "openai_api_key.txt"
 # 1) OpenAI API request will be made if settings file provided, and/or
 # 2) react command will be run on latest revisions.
 [tasks]
-it = { request = "cold-revise.toml", react = "summary" }
 diff = { react = "diff" }
 vimdiff = { react = "vimdiff" }
 where = { react = "echo" }
 replace = { react = "cp" }
 
+[tasks.it]
+request = "cold-revise.toml"
+react = ["diffadapt", "vimdiff"]
+
+[tasks.stomp]
+request = "cold-revise.toml"
+react = ["diffadapt", "cp"]
+
+# Named (Bash) shell commands lines to be run on saved revisions from requests.
+# "$0" will expand to the original source file path.
+# "$@" will expand to the saved revision paths for the source file name.
+# Double quotes are needed to handle file names containing spaces.
 [commands]
 echo = 'echo "$@"'
 diff = 'diff -s "$0" "$@"'
 summary = 'diff -qs "$0" "$@"'
 vimdiff = 'vimdiff "$0" "$@"'
 cp = 'cp "$1" "$0"'
+diffadapt = 'diffadapt "$0" "$@"'
