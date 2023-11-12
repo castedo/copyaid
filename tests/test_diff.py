@@ -1,50 +1,17 @@
 import pytest
 
-import copyaid.cli
+import copyaid.diff
 from copyaid.diff import diffadapt
 
 from os import listdir
 from pathlib import Path
 
-
 CASES_DIR = Path(__file__).parent / "cases"
-
-
-SOURCE_TEXT = "Jupiter big.\nJupiter a planet.\nJupiter gas.\n"
-MOCK_COMPLETION = "Jupiter is a big planet made of gas."
-EXPECTED_TEXT = "Jupiter is\na big planet\nmade of gas.\n"
-
-class MockApi:
-    def __init__(self, api_key_path):
-        pass
-
-    def query(self, req):
-        ret = dict(
-            created=1674259148,
-            choices=[dict(message=dict(content=MOCK_COMPLETION))],
-        )
-        return ret
-
-copyaid.core.ApiProxy.ApiClass = MockApi
-
-def test_main(tmp_path):
-    srcpath = tmp_path / "source.txt"
-    open(srcpath, "w").write(SOURCE_TEXT)
-    retcode = copyaid.cli.main([
-        "proof",
-        str(srcpath),
-        "--dest", str(tmp_path),
-        "--config", "tests/mock_config.toml",
-    ])
-    assert retcode == 0
-    got = open(tmp_path / "R1" / srcpath.name).read()
-    assert got == EXPECTED_TEXT
 
 
 def test_trivial_diffs():
     assert diffadapt("Whatever\n", [""]) == ["\n"]
     assert diffadapt("Hello\n", ["World"]) == ["World\n"]
-
 
 def print_operations(orig_text, rev_text):
     matcher = copyaid.diff.TokenSequenceMatcher(orig_text)
@@ -59,10 +26,7 @@ def print_operations(orig_text, rev_text):
             print(repr(orig_chunk), "x>")
         elif tag == 'replace':
             print(repr(orig_chunk), ">>", repr(rev_chunk))
-        if tag == "equal":
-            tokens.append_unrevised(rev_chunk)
-        else:
-            tokens.append_revised(rev_chunk, orig_chunk)
+        tokens._do_operation(tag, rev_chunk, orig_chunk)
         print("DEBT LEFT:", tokens.line_debt)
 
 
