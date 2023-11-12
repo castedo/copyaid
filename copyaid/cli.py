@@ -5,7 +5,7 @@ from .core import ApiProxy, Config, Task
 import argparse
 from sys import stderr
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 COPYAID_TMP_DIR = ("TMPDIR", "copyaid")
 COPYAID_CONFIG_FILENAME = "copyaid.toml"
@@ -13,11 +13,10 @@ COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/" + COPYAID_CONFIG_FILENAME)
 COPYAID_LOG_DIR = ("XDG_STATE_HOME", "copyaid/log")
 
 
-def main(cmd_line_args: Optional[list[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="CopyAid", prog="copyaid")
-    parser.add_argument("-c", "--config", type=Path)
-    (args, rest) = parser.parse_known_args(cmd_line_args)
-
+def preparse_config(prog: str, cmd_line_args: Optional[list[str]]) -> Union[int, Path]:
+    preparser = argparse.ArgumentParser(add_help=False)
+    preparser.add_argument("-c", "--config", type=Path)
+    (args, rest) = preparser.parse_known_args(cmd_line_args)
     config_path = args.config or Path(get_std_path(*COPYAID_CONFIG_FILE))
     if config_path.is_dir():
         config_path = config_path / COPYAID_CONFIG_FILENAME
@@ -29,27 +28,55 @@ def main(cmd_line_args: Optional[list[str]] = None) -> int:
         else:
             print(f"Config file '{config_path}' not found, run:", file=stderr)
             if args.config is None:
-                print(f"  {parser.prog} init", file=stderr)
+                print(f"  {prog} init", file=stderr)
             else:
-                print(f"  {parser.prog} --config '{args.config}' init", file=stderr)
-            return 1
+                print(f"  {prog} --config '{args.config}' init", file=stderr)
+            return 2
+    return config_path
 
-    config = Config(config_path)
-    parser.add_argument("task", choices=config.task_names)
-    parser.add_argument("-d", "--dest", type=Path)
-    parser.add_argument("source", type=Path, nargs="+")
-    parser.parse_args(cmd_line_args, args)
 
+def main(cmd_line_args: Optional[list[str]] = None) -> int:
+    prog = "copyaid"
+    ret = preparse_config(prog, cmd_line_args)
+    if isinstance(ret, int):
+        return ret
+    config = Config(ret)
+    parser = argparse.ArgumentParser(
+        prog=prog,
+        description="CopyAid",
+        epilog=config.help(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        default=argparse.SUPPRESS,
+        metavar="<config>",
+        help="Configuration file"
+    )
+    parser.add_argument(
+        "-d",
+        "--dest",
+        type=Path,
+        metavar="<dest>",
+        help="Destination directory for revisions"
+    )
+    parser.add_argument("task", choices=config.task_names, metavar="<task>")
+    parser.add_argument("source", type=Path, nargs="+", metavar="<source>")
+    args = parser.parse_args(cmd_line_args)
     if args.dest is None:
         args.dest = Path(get_std_path(*COPYAID_TMP_DIR))
+    return do_task(config, args.task, args.source, args.dest)
+
+
+def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> int:
     exit_code = 0
-    task = Task(args.dest, config.get_task(args.task))
+    task = Task(dest, config.get_task(task_name))
     if task.settings is None:
         api = None
     else:
         api = ApiProxy(config, get_std_path(*COPYAID_LOG_DIR))
-    exit_code = 0
-    for s in args.source:
+    for s in sources:
         if api:
             print("OpenAI request for", s)
             revisions = api.do_request(task.settings, s)

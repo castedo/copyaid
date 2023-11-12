@@ -4,7 +4,7 @@ import openai
 import tomli
 
 # Python Standard Library
-import os, json, subprocess
+import io, os, json, subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -44,7 +44,7 @@ class Config:
     @dataclass
     class Task:
         settings: Any
-        react: str
+        react: Optional[str]
 
     def __init__(self, config_file: Path):
         with open(config_file, "rb") as file:
@@ -73,6 +73,15 @@ class Config:
         assert isinstance(tasks, dict)
         return tasks.keys()
 
+    def _react_as_command(self, react: Optional[str]) -> Optional[str]:
+        ret = None
+        if react is not None:
+            ret = self._data.get("commands", {}).get(react)
+            if ret is None:
+                msg = f"Command '{react}' not found in {self.path}"
+                raise SyntaxError(msg)
+        return ret
+
     def get_task(self, task_name: str) -> Optional[Task]:
         task = self._data.get("tasks", {}).get(task_name)
         if task is None:
@@ -83,14 +92,35 @@ class Config:
         else:
             with open(path, "rb") as file:
                 settings = tomli.load(file)
-        react = task.get("react")
-        if react is not None:
-            cmd = self._data.get("commands", {}).get(react)
-            if cmd is None:
-                msg = f"Command '{react}' not found in {self.path}"
-                raise SyntaxError(msg)
-            react = cmd
+        react = self._react_as_command(task.get("react"))
         return Config.Task(settings, react)
+
+    def help(self) -> str:
+        buf = io.StringIO()
+        buf.write("task choices:\n")
+        for name in self.task_names:
+            buf.write("  ")
+            buf.write(name)
+            buf.write("\n")
+            task = self._data["tasks"][name]
+            path = self._resolve_path(task.get("request"))
+            if path:
+                buf.write("    Request settings: ")
+                buf.write(str(path))
+                buf.write("\n")
+            react = self._react_as_command(task.get("react"))
+            if react:
+                buf.write("    React command: ")
+                buf.write(help_example_react(react))
+            buf.write("\n")
+        return buf.getvalue()
+
+
+def help_example_react(react: str) -> str:
+    cmd = "echo " + react
+    args = [cmd] + ["<source>", "<rev1>", "<rev2>", "<rev3>"]
+    proc = subprocess.run(args, shell=True, stdout=subprocess.PIPE)
+    return proc.stdout.decode('utf-8')
 
 
 class ApiProxy:
