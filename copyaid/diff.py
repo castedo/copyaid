@@ -2,7 +2,7 @@
 import math, re
 from difflib import SequenceMatcher
 
-from typing import Iterator
+from typing import Iterator, Optional
 
 ###############################################################################
 # Code that "diff-adapts" altered text to be more diff-friendly with original
@@ -108,3 +108,22 @@ def diffadapt(orig_text: str, revisions: list[str]) -> list[str]:
         tokens.append_operations(matcher)
         ret.append(str(tokens))
     return ret
+
+
+def cli(cmd_line_args: Optional[list[str]] = None) -> int:
+    import argparse, pathlib
+    parser = argparse.ArgumentParser(prog="diffadapt")
+    parser.add_argument("src")
+    parser.add_argument("rev", nargs="+")
+    args = parser.parse_args(cmd_line_args)
+    with open(args.src) as file:
+        source_text = file.read()
+    rev_texts = list()
+    for rev in args.rev:
+        with open(rev) as file:
+            rev_texts.append(file.read())
+    rev_texts = diffadapt(source_text, rev_texts)
+    for i, rev in enumerate(args.rev):
+        with open(rev, "w") as file:
+            file.write(rev_texts[i])
+    return 0

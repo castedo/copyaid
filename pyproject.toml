@@ -31,6 +31,7 @@ Homepage = "https://gitlab.com/castedo/copyaid"
 
 [project.scripts]
 copyaid = "copyaid.cli:main"
+diffadapt = "copyaid.diff:cli"
 
 [tool.yapf]
 column_limit = 88
