@@ -12,7 +12,7 @@ Simple Example
 
 ```bash
 $ echo "Use [this sofware](htp://copyaid.it) to wright English good." > doc.md
-$ copyaid it doc.md
+$ copyaid stomp doc.md
 OpenAI request for doc.md
 Saving to /tmp/copyaid
 $ cat doc.md
@@ -22,7 +22,7 @@ Use [this software](http://copyaid.it) to write English well.
 Getting Started
 ---------------
 
-### 1: Install 
+### 1: Install
 
 ```bash
 pip install git+https://gitlab.com/castedo/copyaid.git
@@ -61,9 +61,10 @@ $ echo "Use [this sofware](htp://copyaid.it) to wright English good." > doc.md
 $ copyaid it doc.md
 OpenAI request for doc.md
 Saving to /tmp/copyaid
-$ copyaid vimdiff doc.md 
 2 files to edit
 ```
+Vimdiff will be run on the original source and revisions after the OpenAI request.
+
 
 Another example of a possible workflow:
 
