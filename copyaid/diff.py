@@ -1,6 +1,5 @@
 # Python Standard Library
-import math, re
-from difflib import SequenceMatcher
+import difflib, re
 
 from typing import Iterator, Optional
 
@@ -18,7 +17,7 @@ class TokenSequenceMatcher:
 
     def __init__(self, focal_text: str):
         isjunk = lambda x: x == " "
-        self.matcher = SequenceMatcher(isjunk, autojunk=False)
+        self.matcher = difflib.SequenceMatcher(isjunk, autojunk=False)
         self.re_token = re.compile(r"\w+|\W|\n")
         self.focus = self.tokenize(focal_text) + [TokenSequenceMatcher.EOM]
         # SequenceMatcher: ... caches detailed information about the second sequence,
@@ -45,6 +44,7 @@ class TokenSequenceMatcher:
 class DiffAdaptor:
     def __init__(self) -> None:
         self.prev_token: Optional[str] = None
+        self.orig_todo: Tokens = []
         self.line_debt = 0
 
     @staticmethod
@@ -60,15 +60,18 @@ class DiffAdaptor:
     def _do_operation(self, tag: str, rev: Tokens, orig: Tokens) -> Tokens:
         assert rev or orig
         ret = []
-        if tag == "equal":
+        if tag == "equal" and not self.orig_todo:
             ret = self._adapt_unrevised(rev)
         else:
             self.line_debt += orig.count("\n")
+            self.orig_todo += orig
             if len(rev) > 0:
-                ret = self._adapt_revised(rev)
+                ret = self._adapt_revised(rev, self.orig_todo)
+                self.orig_todo = []
             else:
-                if self._undo_delete(orig):
-                    ret = orig
+                if self._undo_delete(self.orig_todo):
+                    ret = self.orig_todo
+                    self.orig_todo = []
         if ret:
             self.prev_token = ret[-1]
         return ret
@@ -82,31 +85,34 @@ class DiffAdaptor:
         return False
 
     def _adapt_unrevised(self, chunk: Tokens) -> Tokens:
+        assert chunk
         self._preempt_chunk(chunk)
-        # Ideally line debt goes to zero when chunks are unrevised.
-        # But sometimes a sequence matcher gets confused and matches
-        # chunks that are from totally different lines.
         if len(chunk) > 1:
-            # Only consider unrevised chunk longer than one token.
-            # Halving and truncating is safer than just setting to zero.
-            self.line_debt = math.trunc(self.line_debt / 2)
+            self.line_debt = 0
         return chunk
 
-    def _adapt_revised(self, rev: Tokens) -> Tokens:
+    def _adapt_revised(self, rev: Tokens, orig: Tokens) -> Tokens:
+        if rev == [' '] and orig == ['\n']:
+            self.line_debt -= 1
+            return orig
         self._preempt_chunk(rev)
+        prev_token = self.prev_token
         for i in range(len(rev)):
             if rev[i] == "\n":
                 self.line_debt -= 1
-            elif rev[i : (i+2)] == [".", " "]:
-                rev[i+1] = "\n"
             elif self.line_debt > 0:
-                if rev[i : (i+2)] in ([",", " "], [";", " "]):
-                    rev[i+1] = "\n"
+                if prev_token in (".", ",", ";"):
+                    if rev[i] == " ":
+                        rev[i] = "\n"
+                        self.line_debt -= 1
+            prev_token = rev[i]
         return rev
 
     def _preempt_chunk(self, chunk: Tokens) -> None:
-        if self.line_debt > 0 and chunk[0:1] == [" "] and self.prev_token != "\n":
-            chunk[0] = "\n"
+        assert chunk
+        if self.line_debt > 0 and self.prev_token not in (" ", "\n"):
+            if chunk[0] == " ":
+                chunk[0] = "\n"
 
 
 def diffadapt(orig_text: str, revisions: list[str]) -> list[str]:

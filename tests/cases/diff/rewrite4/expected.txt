@@ -8,7 +8,5 @@ baseprints are referenced with an intrinsic identifier,
 such as a Software Heritage ID (SWHID)
 [@cosmo_referencing_2020] [@dicosmo:hal-01865790].
 The identity of a baseprint is determined by its exact digital encoding.
-If a baseprint is composed
-of a single file, the digital encoding is a sequence of bytes.
-If a baseprint is composed of a directory of files,
+If a baseprint is composed of a single file, the digital encoding is a sequence of bytes. If a baseprint is composed of a directory of files,
 the digital encoding can be a git tree.

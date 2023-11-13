@@ -40,13 +40,13 @@ class OperationsPrinter(copyaid.diff.DiffAdaptor):
         print_operation([], orig)
         super()._undo_delete(orig)
 
-    def _append_unrevised(self, rev):
+    def _adapt_unrevised(self, rev):
         print_operation(rev, rev)
-        super()._append_unrevised(rev)
+        super()._adapt_unrevised(rev)
 
-    def _append_revised(self, rev, orig):
+    def _adapt_revised(self, rev, orig):
         print_operation(rev, orig)
-        super()._append_revised(rev, orig)
+        super()._adapt_revised(rev, orig)
 
 
 def print_operations(orig_text, rev_text):
