@@ -33,20 +33,20 @@ class OperationsPrinter(copyaid.diff.DiffAdaptor):
     def _do_operation(self, tag, rev, orig):
         assert (tag == 'equal') == (rev == orig)
         #print_operation(rev, orig)
-        super()._do_operation(tag, rev, orig)
-        print("DEBT LEFT:", self.line_debt)
+        ret = super()._do_operation(tag, rev, orig)
+        print("DEBT+OUT: {}/{}".format(self.line_debt, repr("".join(ret))))
 
     def _undo_delete(self, orig):
         print_operation([], orig)
-        super()._undo_delete(orig)
+        return super()._undo_delete(orig)
 
     def _adapt_unrevised(self, rev):
         print_operation(rev, rev)
-        super()._adapt_unrevised(rev)
+        return super()._adapt_unrevised(rev)
 
     def _adapt_revised(self, rev, orig):
         print_operation(rev, orig)
-        super()._adapt_revised(rev, orig)
+        return super()._adapt_revised(rev, orig)
 
 
 def print_operations(orig_text, rev_text):

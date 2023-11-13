@@ -1,0 +1,19 @@
+# Copy**AI**d.it: Copy-Editing with AI from the CLI
+
+This website is an online resource for command line interface (CLI) users who want to
+copy-edit text files, including LaTeX and Markdown files, with AI, specifically [Large
+Language Models](https://en.wikipedia.org/wiki/Large_language_model).
+
+Copy**AI**d is an open-source Python utility for performing copy-editing using the OpenAI API.
+
+## Simple Example
+
+```bash
+$ echo "Use [this software](http://copyaid.it) to write English well." > doc.md
+$ copyaid stomp doc.md
+OpenAI request for doc.md
+Saving to /tmp/copyaid
+$ cat doc.md
+Use [this software](http://copyaid.it) to write English well.
+```
+

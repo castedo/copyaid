@@ -86,16 +86,19 @@ class DiffAdaptor:
 
     def _adapt_unrevised(self, chunk: Tokens) -> Tokens:
         assert chunk
-        self._preempt_chunk(chunk)
+        if self.line_debt > 0 and self.prev_token not in (" ", "\n"):
+            if chunk[0] == " ":
+                chunk[0] = "\n"
+                self.line_debt -= 1
         if len(chunk) > 1:
             self.line_debt = 0
         return chunk
 
     def _adapt_revised(self, rev: Tokens, orig: Tokens) -> Tokens:
-        if rev == [' '] and orig == ['\n']:
+        assert rev or orig
+        if rev == [" "] and orig in (['\n'], ['.', '\n'], [',', '\n'], [';', '\n']):
             self.line_debt -= 1
-            return orig
-        self._preempt_chunk(rev)
+            return ["\n"]
         prev_token = self.prev_token
         for i in range(len(rev)):
             if rev[i] == "\n":
@@ -106,13 +109,10 @@ class DiffAdaptor:
                         rev[i] = "\n"
                         self.line_debt -= 1
             prev_token = rev[i]
+        if not orig and rev.count("\n") > 1:
+            # insertion of multiple lines
+            self.line_debt = 0
         return rev
-
-    def _preempt_chunk(self, chunk: Tokens) -> None:
-        assert chunk
-        if self.line_debt > 0 and self.prev_token not in (" ", "\n"):
-            if chunk[0] == " ":
-                chunk[0] = "\n"
 
 
 def diffadapt(orig_text: str, revisions: list[str]) -> list[str]:

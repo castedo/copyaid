@@ -1,6 +1,5 @@
 Jupiter is the largest planet
-in the Solar System
-and the fifth planet
+in the Solar System and
+the fifth planet
 from the Sun.
-It is classified as a gas giant
-due to its immense size and composition of gas.
+It is classified as a gas giant due to its immense size and composition of gas.
