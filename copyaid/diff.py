@@ -42,39 +42,46 @@ class TokenSequenceMatcher:
         )
 
 
-class DiffAdaptedRevisionTokens:
+class DiffAdaptor:
     def __init__(self) -> None:
+        self.prev_token: Optional[str] = None
         self.line_debt = 0
-        self.tokens: Tokens = []
 
-    def __str__(self) -> str:
-        strs = self.tokens
-        if strs and strs[-1] == TokenSequenceMatcher.EOM:
-            strs = self.tokens[:-1]
-        return "".join(strs)
-
-    def append_operations(self, matcher: TokenSequenceMatcher) -> None:
+    @staticmethod
+    def apply_operations(matcher: TokenSequenceMatcher) -> str:
+        tokens = []
+        adaptor = DiffAdaptor()
         # ops for converting revised text back to orig
         for tag, rev_chunk, orig_chunk in matcher.operations():
-            self._do_operation(tag, rev_chunk, orig_chunk)
+            tokens += adaptor._do_operation(tag, rev_chunk, orig_chunk)
+        assert tokens[-1] == TokenSequenceMatcher.EOM
+        return "".join(tokens[:-1])
 
-    def _do_operation(self, tag: str, rev: Tokens, orig: Tokens) -> None:
+    def _do_operation(self, tag: str, rev: Tokens, orig: Tokens) -> Tokens:
+        assert rev or orig
+        ret = []
         if tag == "equal":
-            self.append_unrevised(rev)
+            ret = self._adapt_unrevised(rev)
         else:
             self.line_debt += orig.count("\n")
             if len(rev) > 0:
-                self.append_revised(rev)
+                ret = self._adapt_revised(rev)
             else:
-                self.undo_delete(orig)
+                if self._undo_delete(orig):
+                    ret = orig
+        if ret:
+            self.prev_token = ret[-1]
+        return ret
 
-    def undo_delete(self, orig_chunk: Tokens) -> None:
-        new_line = (len(self.tokens) == 0 or self.tokens[-1:] == ['\n'])
-        if new_line and all(s.isspace() for s in orig_chunk):
+    def _undo_delete(self, orig: Tokens) -> bool:
+        assert orig
+        new_line = (orig[0] == "\n" or self.prev_token in ("\n", None))
+        if new_line and all(s.isspace() for s in orig):
             # undo deletion of indentation and extra newlines
-            self.tokens += orig_chunk
+            return True
+        return False
 
-    def append_unrevised(self, chunk: Tokens) -> None:
+    def _adapt_unrevised(self, chunk: Tokens) -> Tokens:
         self._preempt_chunk(chunk)
         # Ideally line debt goes to zero when chunks are unrevised.
         # But sometimes a sequence matcher gets confused and matches
@@ -83,22 +90,22 @@ class DiffAdaptedRevisionTokens:
             # Only consider unrevised chunk longer than one token.
             # Halving and truncating is safer than just setting to zero.
             self.line_debt = math.trunc(self.line_debt / 2)
-        self.tokens += chunk
+        return chunk
 
-    def append_revised(self, rev_chunk: Tokens) -> None:
-        self._preempt_chunk(rev_chunk)
-        for i in range(len(rev_chunk)):
-            if rev_chunk[i] == "\n":
+    def _adapt_revised(self, rev: Tokens) -> Tokens:
+        self._preempt_chunk(rev)
+        for i in range(len(rev)):
+            if rev[i] == "\n":
                 self.line_debt -= 1
-            elif rev_chunk[i : (i+2)] == [".", " "]:
-                rev_chunk[i+1] = "\n"
+            elif rev[i : (i+2)] == [".", " "]:
+                rev[i+1] = "\n"
             elif self.line_debt > 0:
-                if rev_chunk[i : (i+2)] in ([",", " "], [";", " "]):
-                    rev_chunk[i+1] = "\n"
-        self.tokens += rev_chunk
+                if rev[i : (i+2)] in ([",", " "], [";", " "]):
+                    rev[i+1] = "\n"
+        return rev
 
     def _preempt_chunk(self, chunk: Tokens) -> None:
-        if self.line_debt > 0 and chunk[0:1] == [" "] and self.tokens[-1:] != ["\n"]:
+        if self.line_debt > 0 and chunk[0:1] == [" "] and self.prev_token != "\n":
             chunk[0] = "\n"
 
 
@@ -109,9 +116,7 @@ def diffadapt(orig_text: str, revisions: list[str]) -> list[str]:
         if not rev_text.endswith("\n"):
             rev_text += "\n"
         matcher.set_alternative(rev_text)
-        tokens = DiffAdaptedRevisionTokens()
-        tokens.append_operations(matcher)
-        ret.append(str(tokens))
+        ret.append(DiffAdaptor.apply_operations(matcher))
     return ret
 
 

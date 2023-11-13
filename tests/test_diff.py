@@ -13,21 +13,48 @@ def test_trivial_diffs():
     assert diffadapt("Whatever\n", [""]) == ["\n"]
     assert diffadapt("Hello\n", ["World"]) == ["World\n"]
 
+
+def print_operation(rev, orig):
+    orig_repr = repr("".join(orig))
+    rev_repr = repr("".join(rev))
+    if rev == orig:
+        print("EQU:", rev_repr)
+    elif not rev:
+        print("DEL:", orig_repr)
+    elif not orig:
+        print("INS:", rev_repr)
+    else:
+        print("ORI:", orig_repr)
+        print("REV:", rev_repr)
+
+
+class OperationsPrinter(copyaid.diff.DiffAdaptor):
+    
+    def _do_operation(self, tag, rev, orig):
+        assert (tag == 'equal') == (rev == orig)
+        #print_operation(rev, orig)
+        super()._do_operation(tag, rev, orig)
+        print("DEBT LEFT:", self.line_debt)
+
+    def _undo_delete(self, orig):
+        print_operation([], orig)
+        super()._undo_delete(orig)
+
+    def _append_unrevised(self, rev):
+        print_operation(rev, rev)
+        super()._append_unrevised(rev)
+
+    def _append_revised(self, rev, orig):
+        print_operation(rev, orig)
+        super()._append_revised(rev, orig)
+
+
 def print_operations(orig_text, rev_text):
     matcher = copyaid.diff.TokenSequenceMatcher(orig_text)
     matcher.set_alternative(rev_text)
-    tokens = copyaid.diff.DiffAdaptedRevisionTokens()
+    tokens = OperationsPrinter()
     for tag, rev_chunk, orig_chunk in matcher.operations():
-        if tag == 'equal':
-            print("==", repr(rev_chunk))
-        elif tag == 'delete':
-            print("+>", repr(rev_chunk))
-        elif tag == 'insert':
-            print(repr(orig_chunk), "x>")
-        elif tag == 'replace':
-            print(repr(orig_chunk), ">>", repr(rev_chunk))
         tokens._do_operation(tag, rev_chunk, orig_chunk)
-        print("DEBT LEFT:", tokens.line_debt)
 
 
 def read_text_files(subcase_dir):
