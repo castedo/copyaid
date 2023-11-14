@@ -44,7 +44,6 @@ class TokenSequenceMatcher:
 class DiffAdaptor:
     def __init__(self) -> None:
         self.prev_token: Optional[str] = None
-        self.orig_todo: Tokens = []
         self.line_debt = 0
 
     @staticmethod
@@ -60,19 +59,16 @@ class DiffAdaptor:
     def _do_operation(self, tag: str, rev: Tokens, orig: Tokens) -> Tokens:
         assert rev or orig
         ret = []
-        if tag == "equal" and not self.orig_todo:
+        if tag == "equal":
             ret = self._adapt_unrevised(rev)
         else:
             self.line_debt += orig.count("\n")
-            self.orig_todo += orig
             if len(rev) > 0:
-                ret = self._adapt_revised(rev, self.orig_todo)
-                self.orig_todo = []
+                ret = self._adapt_revised(rev, orig)
             else:
-                if self._undo_delete(self.orig_todo):
-                    self.line_debt -= self.orig_todo.count("\n")
-                    ret = self.orig_todo
-                    self.orig_todo = []
+                if self._undo_delete(orig):
+                    self.line_debt -= orig.count("\n")
+                    ret = orig
         if ret:
             self.prev_token = ret[-1]
         return ret
@@ -92,7 +88,8 @@ class DiffAdaptor:
             if chunk[0] == " ":
                 chunk[0] = "\n"
                 self.line_debt -= 1
-        if len(chunk) > 1:
+        if len(chunk) > 2:
+            # a non-trivial unrevised chunk probably means lines are now aligning
             self.line_debt = 0
         return chunk
 

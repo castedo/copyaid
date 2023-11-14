@@ -1,0 +1,20 @@
+Copy**AI**d.it: Copyediting with AI from a CLI
+==============================================
+
+AI, such as OpenAI [GPT](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer)
+[Large Language Models](https://en.wikipedia.org/wiki/Large_language_model) (LLMs),
+are capable of frequent, rapid, and very inexpensive
+[copyediting](https://en.wikipedia.org/wiki/Copy_editing).
+Copy**AI**d is an open-source command line interface (CLI) for using the OpenAI API to
+copyedit source text files.
+
+
+Features
+--------
+
+* Supports text in LaTeX, Markdown, and HTML formats.
+* Use with text file comparison tools like vimdiff to review and merge AI revisions.
+* Customize the exact copy-editing instructions sent to OpenAI.
+* Perform simultaneous file comparisons across multiple AI revisions.
+* Customize which programs are automatically run on AI revisions.
+
