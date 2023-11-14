@@ -1,14 +1,33 @@
-Copy**AI**d.it: Copy-Editing with AI from the CLI
-=================================================
+Copy**AI**d.it: Copyediting with AI from a CLI
+==============================================
 
-This website is an online resource for command line interface (CLI) users who want to
-copy-edit text files, including LaTeX and Markdown files, with AI, specifically [Large
-Language Models](https://en.wikipedia.org/wiki/Large_language_model).
+AI, such as OpenAI [GPT](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer)
+[Large Language Models](https://en.wikipedia.org/wiki/Large_language_model) (LLMs),
+are capable of frequent, rapid, and very inexpensive
+[copyediting](https://en.wikipedia.org/wiki/Copy_editing).
+Copy**AI**d is an open-source command line interface (CLI) for using the OpenAI API to
+copyedit source text files.
 
-Copy**AI**d is an open-source Python utility for performing copy-editing using the OpenAI API.
 
-Simple Example 
---------------
+Features
+--------
+
+* Supports text in LaTeX, Markdown, and HTML formats.
+* Use with text file comparison tools like vimdiff to review and merge AI revisions.
+* Customize the exact copy-editing instructions sent to OpenAI.
+* Perform simultaneous file comparisons across multiple AI revisions.
+* Customize which programs are automatically run on AI revisions.
+
+
+<div class="action-band" markdown>
+[Get Started](start.md){ .md-button .md-button--primary }
+</div>
+
+
+Examples
+--------
+
+### Simple Example
 
 ```bash
 $ echo "Use [this sofware](htp://copyaid.it) to wright English good." > doc.md
@@ -19,36 +38,7 @@ $ cat doc.md
 Use [this software](http://copyaid.it) to write English well.
 ```
 
-Getting Started
----------------
-
-### 1: Install
-
-```bash
-pip install git+https://gitlab.com/castedo/copyaid.git
-```
-
-### 2: Install the default configuration file
-
-```bash
-copyaid init
-```
-
-### 3: Sign-up for the OpenAI API
-
-If you do not already have an OpenAI account,
-sign up at [platform.openai.com/signup](https://platform.openai.com/signup).
-
-### 4: Save Your OpenAI API Key
-
-Save your OpenAI API key value as `~/.config/copyaid/openai_api_key.txt`.
-
-If you need to create one, visit
-[platform.openai.com/api-keys](https://platform.openai.com/api-keys).
-
-
-More Examples
--------------
+### Vimdiff Example
 
 Your configuration file `~/.config/copyaid/copyaid.toml` can be customized
 for many workflows and many OpenAI prompts. The following examples work
@@ -65,8 +55,9 @@ Saving to /tmp/copyaid
 ```
 Vimdiff will be run on the original source and revisions after the OpenAI request.
 
+### Workflow Example
 
-Another example of a possible workflow:
+An example workflow of multiple steps:
 
 ```bash
 $ echo "Use [this sofware](htp://copyaid.it) to wright English good." > doc.md
@@ -83,22 +74,6 @@ $ copyaid replace doc.md
 $ cat doc.md
 Use [this software](http://copyaid.it) to write English well.
 ```
-
-
-FAQ
----
-
-Does it work with LaTeX files?
-:   Yes.
-
-Does it work with Markdown?
-:   Yes.
-
-Does it work with Word documents?
-:   Most likely not.
-
-Where is the source code?
-:   Source code available at [gitlab.com/castedo/copyaid](https://gitlab.com/castedo/copyaid).
 
 
 Related

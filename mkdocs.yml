@@ -1,19 +1,23 @@
 site_name: CopyAId.it
 site_url: https://copyaid.it/
+repo_url: https://gitlab.com/castedo/copyaid
+edit_uri: -/edit/copyaid.it/docs
 theme:
   name: material
   features:
+    - content.action.edit
     - content.code.copy
     - toc.integrate
     - navigation.footer
-    - navigation.indexes
     - navigation.top
     - navigation.tracking
+extra_css:
+  - style/extra.css
 markdown_extensions:
   - admonition
   - attr_list
   - def_list
   - md_in_html
 nav:
-  - Start:
-    - index.md
+  - Home: index.md
+  - Get Started: start.md

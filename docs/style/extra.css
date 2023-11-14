@@ -1,0 +1,10 @@
+@media screen and (min-width: 76.25em) {
+  .md-nav--integrated > .md-nav__list > .md-nav__item--active:not(.md-nav__item--nested) {
+    padding: 0;
+  }
+}
+
+.action-band {
+  margin: 4em 0 2em;
+  text-align: center;
+}
