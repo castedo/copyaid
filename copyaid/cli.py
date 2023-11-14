@@ -1,10 +1,11 @@
+from .core import ApiProxy
+from .task import Config, Task
 from .util import get_std_path, copy_package_file
-from .core import ApiProxy, Config, Task
 
 # Python standard libraries
 import argparse
-from sys import stderr
 from pathlib import Path
+from sys import stderr
 from typing import Optional, Union
 
 COPYAID_TMP_DIR = ("TMPDIR", "copyaid")
@@ -75,7 +76,7 @@ def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> 
     if task.settings is None:
         api = None
     else:
-        api = ApiProxy(config, get_std_path(*COPYAID_LOG_DIR))
+        api = config.get_api_proxy(get_std_path(*COPYAID_LOG_DIR))
     for s in sources:
         if api:
             print("OpenAI request for", s)

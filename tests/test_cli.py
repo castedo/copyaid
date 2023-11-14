@@ -5,11 +5,11 @@ import copyaid.cli
 
 SOURCE_TEXT = "Jupiter big.\nJupiter a planet.\nJupiter gas.\n"
 MOCK_COMPLETION = "Jupiter is a big planet made of gas."
-EXPECTED_TEXT = "Jupiter is\na big planet\nmade of gas.\n"
+EXPECTED_TEXT = "Jupiter is\na big planet made of\ngas.\n"
 
 
 class MockApi:
-    def __init__(self, api_key_path):
+    def __init__(self, api_key):
         pass
 
     def query(self, req):
