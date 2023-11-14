@@ -70,6 +70,7 @@ class DiffAdaptor:
                 self.orig_todo = []
             else:
                 if self._undo_delete(self.orig_todo):
+                    self.line_debt -= self.orig_todo.count("\n")
                     ret = self.orig_todo
                     self.orig_todo = []
         if ret:
@@ -86,7 +87,8 @@ class DiffAdaptor:
 
     def _adapt_unrevised(self, chunk: Tokens) -> Tokens:
         assert chunk
-        if self.line_debt > 0 and self.prev_token not in (" ", "\n"):
+        # a large line debt is suspect, probably bad sequence matching
+        if self.line_debt == 1 and self.prev_token not in (" ", "\n"):
             if chunk[0] == " ":
                 chunk[0] = "\n"
                 self.line_debt -= 1
