@@ -1,9 +1,0 @@
-After installing the software, start the computer.
-
-Save the configuration by clicking OK.
-
-Create a server.
-
-Click "View" to access the document.
-
-For additional information, refer to the document.
