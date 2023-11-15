@@ -37,11 +37,8 @@ Use [this software](http://copyaid.it) to write English well.
 
 ### Vimdiff Example
 
-You can customize your configuration file `~/.config/copyaid/copyaid.toml` for various
-workflows and OpenAI prompts. The following examples work with
-the default configuration file installed.
-
-If you prefer using `vimdiff`, consider the following:
+With the default configuration, the `it` task will request a revision from OpenAI and
+then run vimdiff to the original source.
 
 ```bash
 $ echo "Use [this sofware](htp://copyaid.it) to wright English good." > doc.md
@@ -51,27 +48,8 @@ Saving to /tmp/copyaid
 2 files to edit
 ```
 
-Vimdiff will be run on the original source and revisions after the OpenAI request.
-
-### Workflow Example
-
-Here's an example workflow with multiple steps:
-
-```bash
-$ echo "Use [this sofware](htp://copyaid.it) to wright English good." > doc.md
-$ copyaid check doc.md
-OpenAI request for doc.md
-Saving to /tmp/copyaid
-Files doc.md and /tmp/copyaid/R1/doc.md differ
-$ copyaid diff doc.md 
-1c1
-< Use [this sofware](htp://copyaid.it) to wright English good.
----
-> Use [this software](http://copyaid.it) to write English well.
-$ copyaid replace doc.md 
-$ cat doc.md
-Use [this software](http://copyaid.it) to write English well.
-```
+You can customize your configuration file `~/.config/copyaid/copyaid.toml`
+to change what OpenAI requests and commands are done by CopyAId tasks.
 
 
 ## Related
