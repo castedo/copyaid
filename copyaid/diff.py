@@ -127,7 +127,10 @@ def diffadapt(orig_text: str, revisions: list[str]) -> list[str]:
 
 def cli(cmd_line_args: Optional[list[str]] = None) -> int:
     import argparse, pathlib
-    parser = argparse.ArgumentParser(prog="diffadapt")
+    parser = argparse.ArgumentParser(
+        prog="diffadapt",
+        description="Adapt revised files to be more diff-friendly with the source.",
+    )
     parser.add_argument("src")
     parser.add_argument("rev", nargs="+")
     args = parser.parse_args(cmd_line_args)

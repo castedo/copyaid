@@ -24,7 +24,7 @@ def preparse_config(prog: str, cmd_line_args: Optional[list[str]]) -> Union[int,
     if not config_path.exists():
         if rest == ["init"]:
             copy_package_file(COPYAID_CONFIG_FILENAME, config_path)
-            copy_package_file("cold-revise.toml", config_path.parent)
+            copy_package_file("cold-example.toml", config_path.parent)
             return 0
         else:
             print(f"Config file '{config_path}' not found, run:", file=stderr)
@@ -44,7 +44,7 @@ def main(cmd_line_args: Optional[list[str]] = None) -> int:
     config = Config(ret)
     parser = argparse.ArgumentParser(
         prog=prog,
-        description="CopyAid",
+        description="CopyAId",
         epilog=config.help(),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -67,7 +67,21 @@ def main(cmd_line_args: Optional[list[str]] = None) -> int:
     args = parser.parse_args(cmd_line_args)
     if args.dest is None:
         args.dest = Path(get_std_path(*COPYAID_TMP_DIR))
-    return do_task(config, args.task, args.source, args.dest)
+    ret = check_filename_collision(args.source)
+    if ret == 0:
+        ret = do_task(config, args.task, args.source, args.dest)
+    return ret
+
+
+def check_filename_collision(sources: list[Path]) -> int:
+    filenames = set()
+    for s in sources:
+        if s.name in filenames:
+            msg = "Sources must have unique filenames. Conflict: {}"
+            print(msg.format(s.name), file=stderr)
+            return 2
+        filenames.add(s.name)
+    return 0
 
 
 def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> int:

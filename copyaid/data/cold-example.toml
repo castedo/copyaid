@@ -1,9 +1,9 @@
 chat_system = "You are a helpful assistant."
 
 prepend = '''
-Revise and correct errors in the following text for software documentation.
+Revise and correct errors in the following Markdown text for software documentation.
 Improve readability by using standard English and keeping sentences concise.
-Preserve any embedded Markdown and HTML.
+Preserve embedded Markdown and HTML.
 Reply with only the revised text.
 The original text to revise is:
 """

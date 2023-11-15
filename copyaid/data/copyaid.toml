@@ -18,11 +18,11 @@ where = { react = "echo" }
 replace = { react = "cp" }
 
 [tasks.it]
-request = "cold-revise.toml"
+request = "cold-example.toml"
 react = ["diffadapt", "vimdiff"]
 
 [tasks.stomp]
-request = "cold-revise.toml"
+request = "cold-example.toml"
 react = ["diffadapt", "cp"]
 
 # Named (Bash) shell commands lines to be run on saved revisions from requests.
