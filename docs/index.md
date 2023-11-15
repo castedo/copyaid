@@ -1,19 +1,17 @@
-Copy**AI**d.it: Copyediting with AI from a CLI
-==============================================
+# Copy**AI**d.it: Copyedit with AI from a CLI
 
-AI, such as OpenAI [GPT](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer)
-[Large Language Models](https://en.wikipedia.org/wiki/Large_language_model) (LLMs),
-are capable of frequent, rapid, and very inexpensive
+Copy**AI**d is an open-source command line interface (CLI) utility
+that copyedits text files using the OpenAI API for
+[GPT](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer),
+a [Large Language Models](https://en.wikipedia.org/wiki/Large_language_model)
+capable of frequent, rapid, and very inexpensive
 [copyediting](https://en.wikipedia.org/wiki/Copy_editing).
-Copy**AI**d is an open-source command line interface (CLI) for using the OpenAI API to
-copyedit source text files.
 
 
-Features
---------
+## Features
 
 * Supports text in LaTeX, Markdown, and HTML formats.
-* Use with text file comparison tools like vimdiff to review and merge AI revisions.
+* Use it with text file comparison tools like vimdiff to review and merge AI revisions.
 * Customize the exact copy-editing instructions sent to OpenAI.
 * Perform simultaneous file comparisons across multiple AI revisions.
 * Customize which programs are automatically run on AI revisions.
@@ -24,8 +22,7 @@ Features
 </div>
 
 
-Examples
---------
+## Examples
 
 ### Simple Example
 
@@ -40,11 +37,11 @@ Use [this software](http://copyaid.it) to write English well.
 
 ### Vimdiff Example
 
-Your configuration file `~/.config/copyaid/copyaid.toml` can be customized
-for many workflows and many OpenAI prompts. The following examples work
-from the default configuration file installed.
+You can customize your configuration file `~/.config/copyaid/copyaid.toml` for various
+workflows and OpenAI prompts. The following examples work with
+the default configuration file installed.
 
-If you like to use `vimdiff`, consider
+If you prefer using `vimdiff`, consider the following:
 
 ```bash
 $ echo "Use [this sofware](htp://copyaid.it) to wright English good." > doc.md
@@ -53,11 +50,12 @@ OpenAI request for doc.md
 Saving to /tmp/copyaid
 2 files to edit
 ```
+
 Vimdiff will be run on the original source and revisions after the OpenAI request.
 
 ### Workflow Example
 
-An example workflow of multiple steps:
+Here's an example workflow with multiple steps:
 
 ```bash
 $ echo "Use [this sofware](htp://copyaid.it) to wright English good." > doc.md
@@ -76,13 +74,12 @@ Use [this software](http://copyaid.it) to write English well.
 ```
 
 
-Related
--------
+## Related
 
-Inspired and heavily influenced by:
+Copy**AI**d was inspired by and heavily influenced by:
 
 * [manubot-ai-editor](https://github.com/greenelab/manubot-ai-editor/)
 * [A publishing infrastructure for AI-assisted academic authoring](https://doi.org/10.1101/2023.01.21.525030)
 
-If you have a CLI tool you would like mentioned here,
+If you have a CLI tool that you would like mentioned here,
 contact [Castedo Ellerman](https://castedo.com).
