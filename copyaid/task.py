@@ -49,7 +49,9 @@ class Config:
 
     def _react_as_commands(self, react: Any) -> list[str]:
         ret = list()
-        if isinstance(react, str):
+        if react is None:
+            react = []
+        elif isinstance(react, str):
             react = [react]
         for r in react:
             cmd = self._data.get("commands", {}).get(r)

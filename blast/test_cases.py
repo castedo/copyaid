@@ -13,6 +13,9 @@ COPYAID_TOML_TEMPLATE = '''
 openai_api_key_file = "~/.config/copyaid/openai_api_key.txt"
 log_format = "jsoml"
 tasks.it.request = "{}"
+tasks.it.react = ["diffadapt"]
+[commands]
+diffadapt = 'diffadapt "$0" "$@"'
 '''
 
 
