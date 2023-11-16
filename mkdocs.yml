@@ -16,7 +16,6 @@ theme:
 extra_css:
   - style/extra.css
 markdown_extensions:
-  - admonition
   - attr_list
   - admonition
   - def_list
@@ -26,6 +25,10 @@ nav:
   - Get Started: start.md
   - Configuration: config.md
   - Request Settings: requests.md
+extra:
+  analytics:
+    provider: google
+    property: G-XVLJFB05DV
 watch:
   - docs
   - theme
