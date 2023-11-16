@@ -97,7 +97,7 @@ def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> 
             revisions = api.do_request(task.settings, s)
             print("Saving to", task.dest)
             task.write_revisions(s, revisions)
-        exit_code = task.do_react(s)
-        if exit_code:
+        exit_code |= task.do_react(s)
+        if exit_code > 1:
             break
     return exit_code

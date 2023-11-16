@@ -1,0 +1,20 @@
+chat_system = "You are a helpful assistant."
+
+prepend = '''
+Proofread and correct any errors in the following text for a document.
+Preserve embedded Markdown and HTML.
+Reply with only the text even if there are no corrections.
+The text to proofread is:
+"""
+'''
+
+append = '''
+"""
+'''
+
+max_tokens_ratio = 1.25
+
+[openai]
+n = 1
+temperature = 0
+model = "gpt-3.5-turbo-0613"

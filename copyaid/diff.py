@@ -114,14 +114,21 @@ class DiffAdaptor:
         return rev
 
 
-def diffadapt(orig_text: str, revisions: list[str]) -> list[str]:
+def diffadapt(
+    orig_text: str,
+    revisions: list[str],
+    codeword: Optional[str] = None,
+) -> list[str]:
     ret = []
     matcher = TokenSequenceMatcher(orig_text)
     for rev_text in revisions:
-        if not rev_text.endswith("\n"):
-            rev_text += "\n"
-        matcher.set_alternative(rev_text)
-        ret.append(DiffAdaptor.apply_operations(matcher))
+        if codeword == rev_text.strip():
+            ret.append(orig_text)
+        else:
+            if not rev_text.endswith("\n"):
+                rev_text += "\n"
+            matcher.set_alternative(rev_text)
+            ret.append(DiffAdaptor.apply_operations(matcher))
     return ret
 
 
@@ -133,6 +140,7 @@ def cli(cmd_line_args: Optional[list[str]] = None) -> int:
     )
     parser.add_argument("src")
     parser.add_argument("rev", nargs="+")
+    parser.add_argument("-c", "--codeword", help="Codeword for no changes.")
     args = parser.parse_args(cmd_line_args)
     with open(args.src) as file:
         source_text = file.read()
@@ -140,7 +148,7 @@ def cli(cmd_line_args: Optional[list[str]] = None) -> int:
     for rev in args.rev:
         with open(rev) as file:
             rev_texts.append(file.read())
-    rev_texts = diffadapt(source_text, rev_texts)
+    rev_texts = diffadapt(source_text, rev_texts, args.codeword)
     for i, rev in enumerate(args.rev):
         with open(rev, "w") as file:
             file.write(rev_texts[i])
