@@ -19,6 +19,10 @@ diffadapt = 'diffadapt "$0" "$@"'
 '''
 
 
+def files_match(a: Path, b: Path) -> bool:
+    return filecmp.cmp(a, b, shallow=False)
+
+
 def assert_cold_settings(settings_path: Path) -> None:
     with open(settings_path, "rb") as file:
         settings = tomli.load(file)
@@ -40,40 +44,55 @@ class Blaster:
         tmp = str(self.tmp_dir)
         cmdline = ["copyaid", "it", "-c", tmp, "-d", tmp, str(src)]
         print(cmdline)
-        subprocess.run(cmdline)
+        subprocess.run(cmdline, check=True)
         return self.tmp_dir / "R1" / src.name
 
     def get_final(self, src: Path, final: Path, outs: list[Path]) -> None:
         if final.exists():
             print("Skip existing", final)
-        else:
-            for out in outs:
-                out.unlink(missing_ok=True)
+        files = [src]
         idx = 0
         while not final.exists():
             assert idx < len(outs)
-            result = self.copyaidit(src)
-            if filecmp.cmp(result, src, shallow=False):
-                dest = final
+            dest = outs[idx]
+            if dest.exists():
+                print("Skip existing", dest)
+                files.append(dest)
             else:
-                dest = outs[idx]
-                src = dest
-            print(dest)
-            os.makedirs(dest.parent, exist_ok=True)
-            shutil.copy(result, dest)
+                result = self.copyaidit(files[-1])
+                if any(files_match(result, f) for f in files):
+                    dest = final
+                else:
+                    files.append(dest)
+                print(dest)
+                os.makedirs(dest.parent, exist_ok=True)
+                shutil.copy(result, dest)
             idx += 1
+
+    def get_first_output(self, src: Path, out: Path) -> None:
+        if out.exists():
+            print("Skip existing", out)
+        else:
+            result = self.copyaidit(src)
+            print(out)
+            os.makedirs(out.parent, exist_ok=True)
+            shutil.copy(result, out)
 
     def test(self, case: Path) -> None:
         self.write_config(case / "settings.toml")
+        noloop = Path(case / "noloop").exists()
         for group in os.listdir(case / "input"):
             print(group)
             for filename in os.listdir(case / "input" / group):
                 src = case / "input" / group / filename
-                final = case / "final" / group / filename
                 outs = list()
                 for i in range(0, MAX_REQUESTS):
                     outs.append(case / "output" / group / str(i + 1) / filename)
-                self.get_final(src, final, outs)
+                if noloop:
+                    self.get_first_output(src, outs[0])
+                else:
+                    final = case / "final" / group / filename
+                    self.get_final(src, final, outs)
 
 
 def main(cmd_line_args=None):
