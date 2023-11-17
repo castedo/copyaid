@@ -52,8 +52,8 @@ $ cat test.md
 Software documentation is helpful.
 ```
 
-You are setup!
---------------
+You are set up!
+---------------
 
 You are now ready to run Copy**AI**d on your own source text files.
 

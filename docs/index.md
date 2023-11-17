@@ -3,9 +3,10 @@
 Copy**AI**d is an open-source command line interface (CLI) utility
 that copyedits text files using the OpenAI API for
 [GPT](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer),
-a [Large Language Models](https://en.wikipedia.org/wiki/Large_language_model)
+a [Large Language Model](https://en.wikipedia.org/wiki/Large_language_model)
 capable of frequent, rapid, and very inexpensive
-[copyediting](https://en.wikipedia.org/wiki/Copy_editing).
+[copyediting](https://en.wikipedia.org/wiki/Copy_editing)
+(by many orders of magnitude compared to copyediting by humans).
 
 
 ## Features
@@ -20,6 +21,11 @@ capable of frequent, rapid, and very inexpensive
 <div class="action-band" markdown>
 [Get Started](start.md){ .md-button .md-button--primary }
 </div>
+
+!!! alert
+    As of Nov 2023, OpenAI will give you $5 in free credit for your first 3 months.
+    This will cover copyediting for approximately hundreds of thousands of words,
+    depending on which GPT models you use.
 
 
 ## Examples
