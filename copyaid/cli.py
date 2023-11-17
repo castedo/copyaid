@@ -86,17 +86,18 @@ def check_filename_collision(sources: list[Path]) -> int:
 
 def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> int:
     exit_code = 0
-    task = Task(dest, config.get_task(task_name))
+    task = Task(dest, config, task_name)
     if task.settings is None:
         api = None
     else:
         api = config.get_api_proxy(get_std_path(*COPYAID_LOG_DIR))
     for s in sources:
         if api:
-            print("OpenAI request for", s)
-            revisions = api.do_request(task.settings, s)
-            print("Saving to", task.dest)
-            task.write_revisions(s, revisions)
+            if not task.use_saved_revisions(s):
+                print("OpenAI request for", s)
+                revisions = api.do_request(task.settings, s)
+                print("Saving to", task.dest)
+                task.write_revisions(s, revisions)
         exit_code |= task.do_react(s)
         if exit_code > 1:
             break

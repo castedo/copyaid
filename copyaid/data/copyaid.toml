@@ -15,13 +15,20 @@ openai_api_key_file = "openai_api_key.txt"
 diff = { react = "diff" }
 vimdiff = { react = "vimdiff" }
 where = { react = "echo" }
+clean = { react = "rm" }
 replace = { react = "cp" }
 
+[tasks.check]
+request = "cold-example.toml"
+react = ["diffadapt", "summary"]
+
 [tasks.it]
+clean = true
 request = "cold-example.toml"
 react = ["diffadapt", "vimdiff"]
 
 [tasks.stomp]
+clean = true
 request = "cold-example.toml"
 react = ["diffadapt", "cp"]
 
@@ -31,6 +38,7 @@ react = ["diffadapt", "cp"]
 # Double quotes are needed to handle file names containing spaces.
 [commands]
 echo = 'echo "$@"'
+rm = 'rm "$@"'
 diff = 'diff -s "$0" "$@"'
 summary = 'diff -qs "$0" "$@"'
 vimdiff = 'vimdiff "$0" "$@"'

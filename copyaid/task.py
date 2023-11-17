@@ -14,6 +14,7 @@ class Config:
     class Task:
         settings: Any
         react: list[str]
+        clean: bool
 
     def __init__(self, config_file: Path):
         with open(config_file, "rb") as file:
@@ -72,7 +73,8 @@ class Config:
             with open(path, "rb") as file:
                 settings = tomli.load(file)
         react = self._react_as_commands(task.get("react"))
-        return Config.Task(settings, react)
+        clean = task.get("clean", False)
+        return Config.Task(settings, react, clean)
 
     def help(self) -> str:
         buf = io.StringIO()
@@ -106,16 +108,24 @@ def help_example_react(cmd: str) -> str:
 class Task:
     MAX_NUM_REVS = 7
 
-    def __init__(self, dest: Path, config: Optional[Config.Task]):
+    def __init__(self, dest: Path, config: Config, task_name):
+        tconfig = config.get_task(task_name)
+        if tconfig is None:
+            raise ValueError(f"Invalid task name {task_name}.")
         self.dest = dest
-        self.settings = config.settings if config else None
-        self.react = config.react if config else None
+        self.settings = tconfig.settings
+        self.react = tconfig.react
+        self.clean = tconfig.clean
         if self.settings is not None:
             num_revs = self.settings.get("n", 1)
             if num_revs > Task.MAX_NUM_REVS:
                 self.settings["n"] = Task.MAX_NUM_REVS
                 msg = "{} revisions requested, changed to max {}"
                 warn(msg.format(num_revs, Task.MAX_NUM_REVS))
+        if self.clean and not self.settings:
+            self.clean = False
+            msg = "Setting clean=true ignored for task {} since there is no request."
+            warn(msg.format(task_name))
 
     def _rev_paths(self, src_path: Path) -> list[Path]:
         ret = list()
@@ -123,6 +133,10 @@ class Task:
         for i in range(Task.MAX_NUM_REVS):
             ret.append(Path(pattern.format(i + 1)))
         return ret
+
+    def use_saved_revisions(self, src: Path) -> bool:
+        R1 = self.dest / "R1" / src.name
+        return R1.exists() and not self.clean
 
     def write_revisions(self, src_path: Path, revisions: list[str]) -> None:
         for i, path in enumerate(self._rev_paths(src_path)):
