@@ -21,7 +21,7 @@ from previous API requests:
 
 * `diff`: Runs diff on saved revisions.
 
-* `vimdiff`: Runs vimdiff on saved revisions.
+* `vimdiff`: Runs `vimdiff` on saved revisions.
 
 * `where`: Prints the file location(s) of the saved revision(s).
 
@@ -47,6 +47,7 @@ The commands in the list are defined in the `[commands]` section.
 The `[commands]` section defines the shell command line to execute. The bash expression:
 
 * `"$0"` will expand to the path of the source file, and
+
 * `"$@"` will expand to the saved revisions returned by the latest API request.
 
 

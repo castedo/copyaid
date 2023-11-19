@@ -25,6 +25,8 @@ nav:
   - Get Started: start.md
   - Configuration: config.md
   - Request Settings: requests.md
+  - How-To Guides:
+    - howto/notvim.md
 extra:
   analytics:
     provider: google

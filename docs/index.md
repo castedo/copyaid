@@ -12,7 +12,7 @@ capable of frequent, rapid, and very inexpensive
 ## Features
 
 * Supports text in LaTeX, Markdown, and HTML formats.
-* Use it with text file comparison tools like vimdiff to review and merge AI revisions.
+* Use it with text file comparison tools like `vimdiff` to review and merge AI revisions.
 * Customize the exact copy-editing instructions sent to OpenAI.
 * Perform simultaneous file comparisons across multiple AI revisions.
 * Customize which programs are automatically run on AI revisions.
@@ -44,13 +44,14 @@ Use [this software](http://copyaid.it) to write English well.
 ### Vimdiff Example
 
 With the default configuration, the `it` task will request a revision from OpenAI and
-then run vimdiff to the original source.
+then run `vimdiff` to compare against the original source.
 
 ```bash
 $ echo "Use [this sofware](htp://copyaid.it) to wright English good." > doc.md
 $ copyaid it doc.md
 OpenAI request for doc.md
 Saving to /tmp/copyaid
+Files doc.md and /tmp/copyaid/R1/doc.md differ
 2 files to edit
 ```
 
@@ -60,7 +61,7 @@ to change what OpenAI requests and commands are done by CopyAId tasks.
 
 ## Related
 
-Copy**AI**d was inspired by and heavily influenced by:
+Copy**AI**d is inspired by and heavily influenced by:
 
 * [manubot-ai-editor](https://github.com/greenelab/manubot-ai-editor/)
 * [A publishing infrastructure for AI-assisted academic authoring](https://doi.org/10.1101/2023.01.21.525030)
