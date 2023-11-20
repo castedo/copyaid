@@ -20,12 +20,12 @@ replace = { react = "cp" }
 
 [tasks.check]
 request = "cold-example.toml"
-react = ["diffadapt", "summary"]
+react = ["diffadapt", "vim-if-diff"]
 
 [tasks.it]
 clean = true
 request = "cold-example.toml"
-react = ["diffadapt", "vimdiff"]
+react = ["diffadapt", "vim-if-diff"]
 
 [tasks.stomp]
 clean = true
@@ -40,7 +40,7 @@ react = ["diffadapt", "cp"]
 echo = 'echo "$@"'
 rm = 'rm "$@"'
 diff = 'diff -s "$0" "$@"'
-summary = 'diff -qs "$0" "$@"'
+vim-if-diff = 'diff -qs "$0" "$@" || vimdiff "$0" "$@"'
 vimdiff = 'vimdiff "$0" "$@"'
 cp = 'cp "$1" "$0"'
-diffadapt = 'diffadapt "$0" "$@"'
+diffadapt = 'diffadapt -c OK "$0" "$@"'
