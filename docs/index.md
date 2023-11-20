@@ -53,16 +53,3 @@ Saving to /tmp/copyaid
 3 files to edit
 ```
 
-You can customize your configuration file `~/.config/copyaid/copyaid.toml`
-to change the OpenAI requests and commands executed by CopyAId tasks.
-
-
-## Related
-
-Copy**AI**d is inspired by and heavily influenced by:
-
-* [manubot-ai-editor](https://github.com/greenelab/manubot-ai-editor/)
-* [A publishing infrastructure for AI-assisted academic authoring](https://doi.org/10.1101/2023.01.21.525030)
-
-If you have a CLI tool that you would like mentioned here,
-contact [Castedo Ellerman](https://castedo.com).

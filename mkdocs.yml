@@ -29,10 +29,13 @@ nav:
     - Request Settings: requests.md
   - How-To Guides:
     - howto/notvim.md
+  - About: about.md
 extra:
   analytics:
     provider: google
     property: G-XVLJFB05DV
+  generator: false
+copyright: '<a href="/about/">About</a>'
 watch:
   - docs
   - theme
