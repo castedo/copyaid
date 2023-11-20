@@ -9,38 +9,36 @@ openai_api_key_file = "openai_api_key.txt"
 # log_format = "jsoml"
 
 # For each task:
-# 1) OpenAI API request will be made if settings file provided, and/or
-# 2) react command will be run on latest revisions.
+# 1) If clean = true, then remove any previously saved revisions.
+# 2) OpenAI API request will be made if settings file provided, and/or
+# 3) react commands will be run on saved revisions from the API request.
 [tasks]
+replace = { react = "cp" }
 diff = { react = "diff" }
 vimdiff = { react = "vimdiff" }
 where = { react = "echo" }
 clean = { react = "rm" }
-replace = { react = "cp" }
-
-[tasks.check]
-request = "cold-example.toml"
-react = ["diffadapt", "vim-if-diff"]
-
-[tasks.it]
-clean = true
-request = "cold-example.toml"
-react = ["diffadapt", "vim-if-diff"]
 
 [tasks.stomp]
 clean = true
 request = "cold-example.toml"
 react = ["diffadapt", "cp"]
 
+[tasks.it]
+clean = true
+request = "warm-example.toml"
+react = ["diffadapt", "vimdiff"]
+
 # Named (Bash) shell commands lines to be run on saved revisions from requests.
-# "$0" will expand to the original source file path.
-# "$@" will expand to the saved revision paths for the source file name.
+# "$0" expands to the path of the original source file.
+# "$1" expands to the path of the first saved revision from a request.
+# "$@" expands to the paths of all saved revisions from a single request.
 # Double quotes are needed to handle file names containing spaces.
 [commands]
+cp = 'cp "$1" "$0"'
+diff = 'diff -s "$0" "$@"'
+vimdiff = 'vimdiff "$0" "$@"'
+vim-if-diff = 'diff -qs "$0" "$@" || vimdiff "$0" "$@"'
 echo = 'echo "$@"'
 rm = 'rm "$@"'
-diff = 'diff -s "$0" "$@"'
-vim-if-diff = 'diff -qs "$0" "$@" || vimdiff "$0" "$@"'
-vimdiff = 'vimdiff "$0" "$@"'
-cp = 'cp "$1" "$0"'
 diffadapt = 'diffadapt -c OK "$0" "$@"'

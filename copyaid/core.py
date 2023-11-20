@@ -1,5 +1,3 @@
-import openai
-
 # Python Standard Library
 import json, os
 from datetime import datetime
@@ -10,10 +8,14 @@ from warnings import warn
 
 class LiveOpenAiApi:
     def __init__(self, api_key: Optional[str] = None):
+        import openai  # delay a very slow import
+
         if api_key is not None:
             openai.api_key = api_key
 
     def query(self, req: Any) -> Any:
+        import openai
+
         return openai.ChatCompletion.create(**req)  # type: ignore
 
 
