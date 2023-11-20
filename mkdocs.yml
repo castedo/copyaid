@@ -23,8 +23,10 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Get Started: start.md
-  - Configuration: config.md
-  - Request Settings: requests.md
+  - Hot Copyediting: hot.md
+  - Reference:
+    - Configuration: config.md
+    - Request Settings: requests.md
   - How-To Guides:
     - howto/notvim.md
 extra:

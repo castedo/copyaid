@@ -64,6 +64,10 @@ see [How To Opt Out of Using Vimdiff](howto/notvim.md).
 Be cautious with the `stomp` task as it overwrites the source file without showing the changes first.
 It's mainly for testing.
 
+The `it` task defaults to "warm" copyedit. You might prefer adjusting the request
+temperature to cold zero or a hotter temperature. To learn about the difference,
+read the page on [Hot Copyediting](hot.md).
+
 To customize your own tasks, refer to the [configuration page](config.md).
 
 !!! Warning
