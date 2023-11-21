@@ -13,7 +13,7 @@ capable of frequent, rapid, and extremely inexpensive
 
 * Supports LaTeX, Markdown, and HTML formats.
 * Integrates with text file comparison tools like `vimdiff` for reviewing and merging AI revisions.
-* Allows customization of the copy-editing instructions sent to OpenAI.
+* Allows customization of the copyediting instructions sent to OpenAI.
 * Enables simultaneous file comparisons across multiple AI revisions.
 * Permits customization of programs to run automatically on AI revisions.
 
