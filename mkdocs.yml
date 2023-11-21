@@ -29,6 +29,7 @@ nav:
     - Request Settings: requests.md
   - How-To Guides:
     - howto/notvim.md
+  - Costs: costs.md
   - About: about.md
 extra:
   analytics:
