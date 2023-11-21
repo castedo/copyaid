@@ -134,6 +134,9 @@ class Task:
             msg = "Setting clean=true ignored for task {} since there is no request."
             warn(msg.format(task_name))
 
+    def rev_dest_glob(self, src: Path) -> str:
+        return str(self.dest) + "/R?/" + src.name
+
     def _rev_paths(self, src_path: Path) -> list[Path]:
         ret = list()
         pattern = str(self.dest) + "/R{}/" + src_path.name

@@ -1,7 +1,7 @@
-# Put the contents of your OpenAI API key in the file identified by openai_api_key_file:
-openai_api_key_file = "openai_api_key.txt"
-# Or alternatively, you can comment out the openai_api_key_file line
-# and instead set the OPENAI_API_KEY environment variable to your key contents.
+# Instead of setting the OPENAI_API_KEY environment variable,
+# you can opt to put the contents of your OpenAI API key in the file openai_api_key.txt
+# and uncomment the following line:
+# openai_api_key_file = "openai_api_key.txt"
 
 # Optionally, you can log all requests sent and responses received to the OpenAI API.
 # Uncomment one of the following log_format lines based on your preferred format.

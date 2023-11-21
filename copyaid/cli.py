@@ -105,7 +105,7 @@ def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> 
             else:
                 print("OpenAI request for", s)
                 revisions = api.do_request(task.settings, s)
-                print("Saving to", task.dest)
+                print("Saving to", task.rev_dest_glob(s))
                 task.write_revisions(s, revisions)
         exit_code |= task.do_react(s)
         if exit_code > 1:
