@@ -86,7 +86,10 @@ class Config:
             task = self._data["tasks"][name]
             path = self._resolve_path(task.get("request"))
             if path:
-                buf.write("    Request settings: ")
+                if task.get("clean"):
+                    buf.write("    Clean & request: ")
+                else:
+                    buf.write("    Request: ")
                 buf.write(str(path))
                 buf.write("\n")
             react = self._react_as_commands(task.get("react"))
@@ -100,10 +103,14 @@ class Config:
 
 
 def help_example_react(cmd: str) -> str:
-    args = ["echo " + cmd] + ["<source>", "<rev1>", "<rev2>", "<rev3>"]
-    proc = subprocess.run(args, shell=True, stdout=subprocess.PIPE)
-    return proc.stdout.decode('utf-8')
-
+    subs = {
+        '"$0"': "<source>",
+        '"$1"': "<rev1>",
+        '"$@"': "<rev1> ... <revN>",
+    }
+    for k, v in subs.items():
+        cmd = cmd.replace(k, v)
+    return cmd + "\n"
 
 class Task:
     MAX_NUM_REVS = 7
