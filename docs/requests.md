@@ -2,30 +2,50 @@
 
 Values in a request settings file correspond to values sent to the
 [OpenAI API endpoint for chat completion](https://platform.openai.com/docs/api-reference/chat/create).
-Most values correspond directly, but some indirectly determine certain OpenAI request values.
 
-When `copyaid init` is initially run, it creates a new `cold-example.toml` request settings file
+Upon running `copyaid init` for the first time, it creates `cold-example.toml`,
+`warm-example.toml`, and `proof-example.toml` request settings files,
 in addition to a `copyaid.toml` configuration file.
+On most Linux distributions, these files are located in `~/.config/copyaid/`.
 
-Users can adjust the `prepend` value to modify the copyediting
-instructions sent to OpenAI. This value is added at the beginning of the original source text
-being revised.
+For detailed information on the TOML format, visit [toml.io](https://toml.io).
 
 
-## Hot vs Cold Requests
+## Settings
 
-The `cold-example.toml` file includes the following settings:
+`chat_system`
+:   The instructions sent to the OpenAI API.
+    This value is sent as the first message in the request.
+    It will have role `system`.
+    The source text file is sent as the second message with the role `user`.
 
-```
-[openai]
-n = 1
-temperature = 0
-```
+`max_tokens_ratio`
+:   It is generally unnecessary to modify this setting. It is a ratio used to calculate
+    the OpenAI API `max_tokens` parameter.
+    Copy**AI**d will estimate the number of tokens in the source file
+    and multiply that estimate by `max_tokens_ratio` to determine the
+    `max_tokens` value for the API request output.
 
-With these *cold* settings, OpenAI will return a single best revision.
-By changing the `temperature` value to a number closer to `1`, OpenAI will
-randomly suggest a revision from multiple candidate revisions.
-The value of `n` determines the number of candidate revisions that are saved.
-Running *hot* settings such as `temperature = 0.5` and `n = 2` can be useful
-for evaluating multiple AI suggestions and the degree of confidence in those AI
-suggestions.
+`openai.n`
+:   The `n` value specifies the number of candidate revisions to save.
+    If you choose `n = 1`, you probably also want `temperature = 0`.
+
+`openai.temperature`
+:   OpenAI API sampling temperature.
+    For more details on this setting, refer to [Hot Copyediting](hot.md).
+
+`openai.model`
+:   The OpenAI API
+    [chat completion compatible model](https://platform.openai.com/docs/models/model-endpoint-compatibility)
+    to be used.
+
+
+## Older settings
+
+The `chat_system` setting has limited support with GPT-3.
+For this older model,
+the `prepend` and `append` settings are useful for incorporating the copyediting
+instructions as part of the initial message along with the original source text.
+These values are added before and after the source text to be revised as the chat
+message sent to OpenAI.
+

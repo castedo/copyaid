@@ -29,7 +29,7 @@ nav:
     - Configuration: config.md
     - Request Settings: requests.md
   - How-To Guides:
-    - howto/notvim.md
+    - Opt Out of Vimdiff: howto/notvim.md
   - Costs: costs.md
   - About: about.md
 extra:

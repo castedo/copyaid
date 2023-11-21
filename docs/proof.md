@@ -18,7 +18,8 @@ Copy**AI**d will simply indicate that the saved revision and the source text are
 !!! tip
     If a proofreading results in an unwanted "correction",
     you can edit away the mis-correction *in the saved revision* to match the source
-    text as you prefer.
+    text as you prefer. If all of your source file is as you want it, you can run
+    `copyaid freeze example.md` to make the revision file equal the source file.
     The next time you run `copyaid proof` on that file, it will confirm that the source
     text and the "saved revision" are identical.
 
