@@ -6,7 +6,7 @@
 ### 1) Install Python Package
 
 ```bash
-pip install git+https://gitlab.com/castedo/copyaid.git
+pip install copyaid
 ```
 
 ### 2) Install the Default Configuration File
