@@ -25,6 +25,8 @@ def preparse_config(prog: str, cmd_line_args: Optional[list[str]]) -> Union[int,
         if rest == ["init"]:
             copy_package_file(COPYAID_CONFIG_FILENAME, config_path)
             copy_package_file("cold-example.toml", config_path.parent)
+            copy_package_file("warm-example.toml", config_path.parent)
+            copy_package_file("proof-example.toml", config_path.parent)
             return 0
         else:
             print(f"Config file '{config_path}' not found, run:", file=stderr)
