@@ -24,3 +24,5 @@ For Markdown files, different Markdown flavors have various methods for
 combining multiple smaller source files into a single output document.
 
 For more details on API pricing, visit the [OpenAI Pricing page](https://openai.com/pricing).
+Note that Copy**AI**d will incur the input cost of sending the source text
+plus the ouput cost of any revision text, if edits are made.
