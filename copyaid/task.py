@@ -2,7 +2,7 @@ import tomli
 from .core import ApiProxy
 
 # Python Standard Library
-import io, os, subprocess
+import filecmp, io, os, subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional
@@ -108,7 +108,7 @@ def help_example_react(cmd: str) -> str:
 class Task:
     MAX_NUM_REVS = 7
 
-    def __init__(self, dest: Path, config: Config, task_name):
+    def __init__(self, dest: Path, config: Config, task_name: str):
         tconfig = config.get_task(task_name)
         if tconfig is None:
             raise ValueError(f"Invalid task name {task_name}.")
@@ -134,9 +134,14 @@ class Task:
             ret.append(Path(pattern.format(i + 1)))
         return ret
 
-    def use_saved_revisions(self, src: Path) -> bool:
-        R1 = self.dest / "R1" / src.name
-        return R1.exists() and not self.clean
+    def use_saved_revision(self, src: Path) -> Optional[Path]:
+        if not self.clean:
+            R1 = self.dest / "R1" / src.name
+            R2 = self.dest / "R2" / src.name
+            if R1.exists() and not R2.exists():
+                if filecmp.cmp(src, R1, shallow=False):
+                    return R1
+        return None
 
     def write_revisions(self, src_path: Path, revisions: list[str]) -> None:
         for i, path in enumerate(self._rev_paths(src_path)):

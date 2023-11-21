@@ -92,8 +92,15 @@ def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> 
     else:
         api = config.get_api_proxy(get_std_path(*COPYAID_LOG_DIR))
     for s in sources:
+        if not s.exists():
+            print(f"File not found: '{s}'", file=stderr)
+            exit_code = 2
+            break
         if api:
-            if not task.use_saved_revisions(s):
+            saved = task.use_saved_revision(s)
+            if saved:
+                print("Reusing saved", saved)
+            else:
                 print("OpenAI request for", s)
                 revisions = api.do_request(task.settings, s)
                 print("Saving to", task.dest)
