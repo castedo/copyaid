@@ -11,7 +11,7 @@ capable of frequent, rapid, and extremely inexpensive
 
 ## Features
 
-* Supports LaTeX, Markdown, and HTML formats.
+* Supports Markdown, LaTeX<sup>\*</sup>, and HTML<sup>\*</sup> formats.
 * Integrates with text file comparison tools like `vimdiff` for reviewing and merging AI revisions.
 * Allows customization of the copyediting instructions sent to OpenAI.
 * Enables simultaneous file comparisons across multiple AI revisions.
@@ -23,8 +23,15 @@ capable of frequent, rapid, and extremely inexpensive
 </div>
 
 !!! alert
-    As of Nov 2023, OpenAI offers $5 in free credit for your first 3 months.
+    As of November 2023, OpenAI offers $5 in free credit for your first 3 months.
     This can cover copyediting for more than a hundred thousand words.
+
+!!! warning "\*: formats warning"
+    As of November 2023, the default OpenAI request instructions are tested with
+    Markdown with **some** embedded HTML and LaTeX (math).
+    Documents that are primarily LaTeX will require additional customization of the request
+    settings file and possibly some restructuring of the source files.
+    Files that are mostly HTML may not be a good use case for Copy**AI**d.
 
 
 ## Examples
