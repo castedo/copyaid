@@ -2,6 +2,7 @@ import pytest
 
 import copyaid.cli
 
+from types import SimpleNamespace
 
 SOURCE_TEXT = "Jupiter big.\nJupiter a planet.\nJupiter gas.\n"
 MOCK_COMPLETION = "Jupiter is a big planet made of gas."
@@ -13,11 +14,16 @@ class MockApi:
         pass
 
     def query(self, req):
-        ret = dict(
+        return SimpleNamespace(
             created=1674259148,
-            choices=[dict(message=dict(content=MOCK_COMPLETION))],
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content=MOCK_COMPLETION
+                    )
+                )
+            ]
         )
-        return ret
 
 copyaid.core.ApiProxy.ApiClass = MockApi
 

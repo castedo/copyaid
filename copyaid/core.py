@@ -49,16 +49,12 @@ class ApiProxy:
         request = make_openai_request(settings, source_text)
         response = self._api.query(request)
         self.log_openai_query(src_path.stem, request, response)
-        revisions = list()
-        for choice in response.get("choices", []):
-            text = choice.get("message", {}).get("content")
-            revisions.append(text)
-        return revisions
+        return [c.message.content for c in response.choices]
 
     def log_openai_query(self, name: str, request: Any, response: Any) -> None:
         if not self.log_format:
             return
-        t = datetime.utcfromtimestamp(response["created"])
+        t = datetime.utcfromtimestamp(response.created)
         ts = t.isoformat().replace("-", "").replace(":", "") + "Z"
         data = dict(request=request, response=response)
         os.makedirs(self.log_path, exist_ok=True)
