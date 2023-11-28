@@ -8,15 +8,12 @@ from warnings import warn
 
 class LiveOpenAiApi:
     def __init__(self, api_key: Optional[str] = None):
-        import openai  # delay a very slow import
+        from openai import OpenAI  # delay a slow import
 
-        if api_key is not None:
-            openai.api_key = api_key
+        self.client = OpenAI(api_key=api_key)
 
     def query(self, req: Any) -> Any:
-        import openai
-
-        return openai.ChatCompletion.create(**req)  # type: ignore
+        return self.client.chat.completions.create(**req)
 
 
 def make_openai_request(settings: Any, source: str) -> Any:

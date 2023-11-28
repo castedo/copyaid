@@ -4,17 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "copyaid"
-version = "0.3.4"
+version = "0.4.1"
 dependencies = [
-    "openai",
+    "openai >= 1",
     "tomli",
 ]
 description = "Copyedit with OpenAI from a CLI."
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
-    "Programming Language :: Python :: 3", 
-    "License :: OSI Approved :: MIT License", 
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX",
 ]
 license = {file = "LICENSE"}
