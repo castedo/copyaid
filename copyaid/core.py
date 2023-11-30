@@ -56,7 +56,7 @@ class ApiProxy:
             return
         t = datetime.utcfromtimestamp(response.created)
         ts = t.isoformat().replace("-", "").replace(":", "") + "Z"
-        data = dict(request=request, response=response)
+        data = dict(request=request, response=response.model_dump())
         os.makedirs(self.log_path, exist_ok=True)
         save_stem = name + "." + ts
         print("Logging OpenAI response", save_stem)
