@@ -7,6 +7,7 @@ is capable of frequent, rapid, and very inexpensive
 CopyAI is an open-source command line interface (CLI) for using the OpenAI API to
 copyedit source text files.
 
+
 ## Features
 
 * Supports text in LaTeX, Markdown, and HTML formats.

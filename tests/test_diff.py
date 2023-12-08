@@ -34,7 +34,9 @@ class OperationsPrinter(copyaid.diff.DiffAdaptor):
         assert (tag == 'equal') == (rev == orig)
         #print_operation(rev, orig)
         ret = super()._do_operation(tag, rev, orig)
-        print("DEBT+OUT: {}/{}".format(self.line_debt, repr("".join(ret))))
+        tokens = repr("".join(ret))
+        last_token = repr(self.last_token)
+        print("DEBT/OUT/LAST: {}/{}/{}".format(self.line_debt, tokens, last_token))
 
     def _undo_delete(self, orig):
         print_operation([], orig)

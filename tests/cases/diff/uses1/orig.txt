@@ -1,0 +1,3 @@
+Running Baseprinter in a container requires the download and caching of
+approximately one gigabyte of container image data.
+In contrast, a local installation uses significantly less disk space.

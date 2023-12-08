@@ -43,7 +43,7 @@ class TokenSequenceMatcher:
 
 class DiffAdaptor:
     def __init__(self) -> None:
-        self.prev_token: Optional[str] = None
+        self.last_token: Optional[str] = None
         self.line_debt = 0
 
     @staticmethod
@@ -53,8 +53,8 @@ class DiffAdaptor:
         # ops for converting revised text back to orig
         for tag, rev_chunk, orig_chunk in matcher.operations():
             tokens += adaptor._do_operation(tag, rev_chunk, orig_chunk)
-        assert tokens[-1] == TokenSequenceMatcher.EOM
-        return "".join(tokens[:-1])
+        assert adaptor.last_token == TokenSequenceMatcher.EOM
+        return "".join(tokens)
 
     def _do_operation(self, tag: str, rev: Tokens, orig: Tokens) -> Tokens:
         assert rev or orig
@@ -70,12 +70,14 @@ class DiffAdaptor:
                     self.line_debt -= orig.count("\n")
                     ret = orig
         if ret:
-            self.prev_token = ret[-1]
+            if self.last_token is not None:
+                ret.insert(0, self.last_token)
+            self.last_token = ret.pop()
         return ret
 
     def _undo_delete(self, orig: Tokens) -> bool:
         assert orig
-        new_line = (orig[0] == "\n" or self.prev_token in ("\n", None))
+        new_line = (orig[0] == "\n" or self.last_token in ("\n", None))
         if new_line and all(s.isspace() for s in orig):
             # undo deletion of indentation and extra newlines
             return True
@@ -84,10 +86,14 @@ class DiffAdaptor:
     def _adapt_unrevised(self, chunk: Tokens) -> Tokens:
         assert chunk
         # a large line debt is suspect, probably bad sequence matching
-        if self.line_debt == 1 and self.prev_token not in (" ", "\n"):
-            if chunk[0] == " ":
-                chunk[0] = "\n"
+        if self.line_debt == 1:
+            if self.last_token == " ":
+                self.last_token = "\n"
                 self.line_debt -= 1
+            elif self.last_token != "\n":
+                if chunk[0] == " ":
+                    chunk[0] = "\n"
+                    self.line_debt -= 1
         if len(chunk) > 2:
             # a non-trivial unrevised chunk probably means lines are now aligning
             self.line_debt = 0
@@ -95,10 +101,12 @@ class DiffAdaptor:
 
     def _adapt_revised(self, rev: Tokens, orig: Tokens) -> Tokens:
         assert rev or orig
-        if rev == [" "] and orig in (['\n'], ['.', '\n'], [',', '\n'], [';', '\n']):
-            self.line_debt -= 1
-            return ["\n"]
-        prev_token = self.prev_token
+        if orig in (['\n'], ['.', '\n'], [',', '\n'], [';', '\n']):
+            if rev[0] == " ":
+                rev[0] = "\n"
+            else:
+                rev.insert(0, "\n")
+        prev_token = self.last_token
         for i in range(len(rev)):
             if rev[i] == "\n":
                 self.line_debt -= 1
