@@ -36,9 +36,8 @@ def make_openai_request(settings: Any, source: str) -> Any:
 class ApiProxy:
     ApiClass = LiveOpenAiApi
 
-    def __init__(
-        self, api_key: Optional[str], log_path: Path, log_format: Optional[str]
-    ):
+    def __init__(self, api_key: Optional[str], log_path: Path,
+                 log_format: Optional[str]):
         self.log_path = log_path
         self.log_format = log_format
         self._api = ApiProxy.ApiClass(api_key)
@@ -56,7 +55,25 @@ class ApiProxy:
             return
         t = datetime.utcfromtimestamp(response.created)
         ts = t.isoformat().replace("-", "").replace(":", "") + "Z"
-        data = dict(request=request, response=response.model_dump())
+        response_ex = {
+            'choices': {
+                '__all__': {
+                    'logprobs': {
+                        'content': {
+                            '__all__': {
+                                'bytes': True,
+                                'top_logprobs': {
+                                    0: True,
+                                    '__all__': {'bytes'},
+                                },
+                            }
+                        },
+                    },
+                }
+            },
+        }
+        response_dump = response.model_dump(exclude_unset=True, exclude=response_ex)
+        data = dict(request=request, response=response_dump)
         os.makedirs(self.log_path, exist_ok=True)
         save_stem = name + "." + ts
         print("Logging OpenAI response", save_stem)

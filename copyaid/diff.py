@@ -104,6 +104,11 @@ class DiffAdaptor:
         if orig in (['\n'], ['.', '\n'], [',', '\n'], [';', '\n']):
             if rev[0] == " ":
                 rev[0] = "\n"
+            elif rev[0] in (".", ",", ";"):
+                if rev[1:] == [" "]:
+                    rev[1] = "\n"
+                else:
+                    rev.insert(1, "\n")
             else:
                 rev.insert(0, "\n")
         prev_token = self.last_token

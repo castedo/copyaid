@@ -1,0 +1,7 @@
+* If you prefer to author a document on your local computer,
+follow the [tutorial to author a document locally](author_locally.md).
+* If you prefer to author a document in [Overleaf](https://www.overleaf.com/),
+follow the [tutorial to author a document via Overleaf](author_via_overleaf.md).
+* If you prefer to start with a minimal GitHub repository without any initial document,
+follow the [How to Run Baseprinter via GitHub](../baseprinter/howto/minimal_github.md)
+guide.
