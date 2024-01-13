@@ -89,16 +89,13 @@ def check_filename_collision(sources: list[Path]) -> int:
 def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> int:
     exit_code = 0
     task = Task(dest, config, task_name)
-    if task.settings is None:
-        api = None
-    else:
-        api = config.get_api_proxy(get_std_path(*COPYAID_LOG_DIR))
+    api = config.get_api_proxy(get_std_path(*COPYAID_LOG_DIR))
     for s in sources:
         if not s.exists():
             print(f"File not found: '{s}'", file=stderr)
             exit_code = 2
             break
-        if api:
+        if task.settings:
             saved = task.use_saved_revision(s)
             if saved:
                 print("Reusing saved", saved)

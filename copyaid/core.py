@@ -18,7 +18,7 @@ class LiveOpenAiApi:
 
 def make_openai_request(settings: Any, source: str) -> Any:
     ret = settings["openai"]
-    ret["max_tokens"] = max(6, int(settings["max_tokens_ratio"] * len(source) / 4))
+    ret["max_tokens"] = max(32, int(settings["max_tokens_ratio"] * len(source) / 4))
     prompt = settings.get("prepend", "") + source + settings.get("append", "")
     ret["messages"] = [
         {
