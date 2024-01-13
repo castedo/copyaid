@@ -1,5 +1,5 @@
 import tomli
-from .core import ApiProxy
+from .core import ApiProxy, RequestSettings
 
 # Python Standard Library
 import filecmp, io, os, subprocess
@@ -10,9 +10,13 @@ from warnings import warn
 
 
 class Config:
+    """
+    Class for handling user config files (usually `copyaid.toml`).
+    """
+
     @dataclass
     class Task:
-        settings: Any
+        settings: RequestSettings | None
         react: list[str]
         clean: bool
 
@@ -70,8 +74,7 @@ class Config:
         if path is None:
             settings = None
         else:
-            with open(path, "rb") as file:
-                settings = tomli.load(file)
+            settings = RequestSettings(path)
         react = self._react_as_commands(task.get("react"))
         clean = task.get("clean", False)
         return Config.Task(settings, react, clean)
@@ -112,6 +115,7 @@ def help_example_react(cmd: str) -> str:
         cmd = cmd.replace(k, v)
     return cmd + "\n"
 
+
 class Task:
     MAX_NUM_REVS = 7
 
@@ -123,12 +127,6 @@ class Task:
         self.settings = tconfig.settings
         self.react = tconfig.react
         self.clean = tconfig.clean
-        if self.settings is not None:
-            num_revs = self.settings.get("n", 1)
-            if num_revs > Task.MAX_NUM_REVS:
-                self.settings["n"] = Task.MAX_NUM_REVS
-                msg = "{} revisions requested, changed to max {}"
-                warn(msg.format(num_revs, Task.MAX_NUM_REVS))
         if self.clean and not self.settings:
             self.clean = False
             msg = "Setting clean=true ignored for task {} since there is no request."

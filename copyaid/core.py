@@ -1,3 +1,5 @@
+import tomli
+
 # Python Standard Library
 import json, os
 from datetime import datetime
@@ -16,21 +18,31 @@ class LiveOpenAiApi:
         return self.client.chat.completions.create(**req)
 
 
-def make_openai_request(settings: Any, source: str) -> Any:
-    ret = settings["openai"]
-    ret["max_tokens"] = max(32, int(settings["max_tokens_ratio"] * len(source) / 4))
-    prompt = settings.get("prepend", "") + source + settings.get("append", "")
-    ret["messages"] = [
-        {
-            "role": "system",
-            "content": settings["chat_system"]
-        },
-        {
-            "role": "user",
-            "content": prompt
-        },
-    ]
-    return ret
+class RequestSettings:
+    def __init__(self, path: Path):
+        with open(path, "rb") as file:
+            data = tomli.load(file)
+        self.max_tokens_ratio = data["max_tokens_ratio"]
+        self.system_prompt = data["chat_system"]
+        self._openai = data.get("openai")
+        self._prepend = data.get("prepend", "")
+        self._append = data.get("append", "")
+
+    def make_openai_request(self, source: str) -> dict[str, Any]:
+        assert isinstance(self._openai, dict)
+        ret = dict(self._openai)
+        ret["max_tokens"] = max(32, int(self.max_tokens_ratio * len(source) / 4))
+        ret["messages"] = [
+            {
+                "role": "system",
+                "content": self.system_prompt
+            },
+            {
+                "role": "user",
+                "content": self._prepend + source + self._append
+            },
+        ]
+        return ret
 
 
 class ApiProxy:
@@ -42,10 +54,10 @@ class ApiProxy:
         self.log_format = log_format
         self._api = ApiProxy.ApiClass(api_key)
 
-    def do_request(self, settings: Any, src_path: Path) -> list[str]:
+    def do_request(self, settings: RequestSettings, src_path: Path) -> list[str]:
         with open(src_path) as file:
             source_text = file.read()
-        request = make_openai_request(settings, source_text)
+        request = settings.make_openai_request(source_text)
         response = self._api.query(request)
         self.log_openai_query(src_path.stem, request, response)
         return [c.message.content for c in response.choices]
