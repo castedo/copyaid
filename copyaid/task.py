@@ -1,56 +1,26 @@
 import tomli
-from .core import ApiProxy, PromptSettings
+from .core import PromptSettings, WorkFiles
 
 # Python Standard Library
-import filecmp, io, os, subprocess
+import io, os, subprocess
 from pathlib import Path
 from typing import Any, Iterable, Optional
 from warnings import warn
 
 
 class Task:
-    MAX_NUM_REVS = 7
-
     def __init__(self, dest: Path):
         self.dest = dest
         self.settings: PromptSettings | None = None
         self.react: list[str] = []
         self.clean = False
 
-    def rev_dest_glob(self, src: Path) -> str:
-        return str(self.dest) + "/R?/" + src.name
-
-    def _rev_paths(self, src_path: Path) -> list[Path]:
-        ret = list()
-        pattern = str(self.dest) + "/R{}/" + src_path.name
-        for i in range(Task.MAX_NUM_REVS):
-            ret.append(Path(pattern.format(i + 1)))
-        return ret
-
-    def use_saved_revision(self, src: Path) -> Optional[Path]:
-        if not self.clean:
-            R1 = self.dest / "R1" / src.name
-            R2 = self.dest / "R2" / src.name
-            if R1.exists() and not R2.exists():
-                if filecmp.cmp(src, R1, shallow=False):
-                    return R1
-        return None
-
-    def write_revisions(self, src_path: Path, revisions: list[str]) -> None:
-        for i, path in enumerate(self._rev_paths(src_path)):
-            if i < len(revisions):
-                os.makedirs(path.parent, exist_ok=True)
-                with open(path, "w") as file:
-                    file.write(revisions[i])
-            else:
-                path.unlink(missing_ok=True)
-
-    def do_react(self, src_path: Path) -> int:
+    def do_react(self, work: WorkFiles) -> int:
         ret = 0
         if self.react:
-            found_revs = [str(p) for p in self._rev_paths(src_path) if p.exists()]
+            found_revs = [str(p) for p in work.revisions()]
             if found_revs:
-                args = [str(src_path)] + found_revs
+                args = [str(work.src)] + found_revs
                 for cmd in self.react:
                     proc = subprocess.run([cmd] + args, shell=True)
                     ret = proc.returncode
@@ -76,14 +46,14 @@ class Config:
                 ret = self.path.parent / ret
         return ret
 
-    def get_api_proxy(self, log_path: Path) -> ApiProxy:
+    def get_api_key(self) -> str | None:
         api_key = None
         api_key_path = self._data.get("openai_api_key_file")
         api_key_path = self._resolve_path(api_key_path)
         if api_key_path is not None:
             with open(api_key_path, 'r') as file:
                 api_key = file.read().strip()
-        return ApiProxy(api_key, log_path, self.log_format)
+        return api_key
 
     @property
     def log_format(self) -> Optional[str]:

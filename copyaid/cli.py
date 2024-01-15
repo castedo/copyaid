@@ -1,4 +1,4 @@
-from .core import ApiProxy
+from .core import ApiProxy, WorkFiles
 from .task import Config, Task
 from .util import get_std_path, copy_package_file
 
@@ -12,6 +12,7 @@ COPYAID_TMP_DIR = ("TMPDIR", "copyaid")
 COPYAID_CONFIG_FILENAME = "copyaid.toml"
 COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/" + COPYAID_CONFIG_FILENAME)
 COPYAID_LOG_DIR = ("XDG_STATE_HOME", "copyaid/log")
+MAX_NUM_REVS = 7
 
 
 def preparse_config(prog: str, cmd_line_args: Optional[list[str]]) -> Union[int, Path]:
@@ -89,22 +90,24 @@ def check_filename_collision(sources: list[Path]) -> int:
 def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> int:
     exit_code = 0
     task = config.get_task(task_name, dest)
-    api = config.get_api_proxy(get_std_path(*COPYAID_LOG_DIR))
-    for s in sources:
-        if not s.exists():
-            print(f"File not found: '{s}'", file=stderr)
+    log_path = get_std_path(*COPYAID_LOG_DIR)
+    api = ApiProxy(config.get_api_key(), log_path, config.log_format)
+    for src in sources:
+        if not src.exists():
+            print(f"File not found: '{src}'", file=stderr)
             exit_code = 2
             break
+        work = WorkFiles(src, str(dest) + "/R{}/" + src.name, MAX_NUM_REVS)
         if task.settings:
-            saved = task.use_saved_revision(s)
-            if saved:
+            saved = work.one_revision_equal_to_source()
+            if saved and not task.clean:
                 print("Reusing saved", saved)
             else:
-                print("OpenAI request for", s)
-                revisions = api.do_request(task.settings, s)
-                print("Saving to", task.rev_dest_glob(s))
-                task.write_revisions(s, revisions)
-        exit_code |= task.do_react(s)
+                print("OpenAI request for", src)
+                revisions = api.do_request(task.settings, src)
+                print("Saving to", work.dest_glob)
+                work.write_revisions(revisions)
+        exit_code |= task.do_react(work)
         if exit_code > 1:
             break
     return exit_code

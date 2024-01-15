@@ -1,7 +1,7 @@
 import tomli
 
 # Python Standard Library
-import json, os
+import filecmp, json, os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -99,3 +99,32 @@ class ApiProxy:
                 file.write("\n")
         else:
             warn("Unsupported log format: {}".format(self.log_format))
+
+
+class WorkFiles:
+    def __init__(self, src: str | Path, dest: str | Path, max_num_revs: int = 1):
+        assert 0 < max_num_revs < 10
+        self.src = Path(src)
+        dest = str(dest)
+        self._dests = [Path(dest.format(i + 1)) for i in range(max_num_revs)]
+        self.dest_glob = dest.format("?")
+
+    def revisions(self) -> list[Path]:
+        return [p for p in self._dests if p.exists()]
+
+    def one_revision_equal_to_source(self) -> Path | None:
+        ret = None
+        if len(self._dests) == 1:
+            one = self._dests[0]
+            if one.exists() and filecmp.cmp(self.src, one, shallow=False):
+                ret = one
+        return ret
+
+    def write_revisions(self, revisions: list[str]) -> None:
+        for i, path in enumerate(self._dests):
+            if i < len(revisions):
+                os.makedirs(path.parent, exist_ok=True)
+                with open(path, "w") as file:
+                    file.write(revisions[i])
+            else:
+                path.unlink(missing_ok=True)
