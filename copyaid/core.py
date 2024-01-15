@@ -18,7 +18,7 @@ class LiveOpenAiApi:
         return self.client.chat.completions.create(**req)
 
 
-class RequestSettings:
+class PromptSettings:
     def __init__(self, path: Path):
         with open(path, "rb") as file:
             data = tomli.load(file)
@@ -48,13 +48,14 @@ class RequestSettings:
 class ApiProxy:
     ApiClass = LiveOpenAiApi
 
-    def __init__(self, api_key: Optional[str], log_path: Path,
-                 log_format: Optional[str]):
+    def __init__(
+        self, api_key: Optional[str], log_path: Path, log_format: Optional[str]
+    ):
         self.log_path = log_path
         self.log_format = log_format
         self._api = ApiProxy.ApiClass(api_key)
 
-    def do_request(self, settings: RequestSettings, src_path: Path) -> list[str]:
+    def do_request(self, settings: PromptSettings, src_path: Path) -> list[str]:
         with open(src_path) as file:
             source_text = file.read()
         request = settings.make_openai_request(source_text)

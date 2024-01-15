@@ -88,7 +88,7 @@ def check_filename_collision(sources: list[Path]) -> int:
 
 def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> int:
     exit_code = 0
-    task = Task(dest, config, task_name)
+    task = config.get_task(task_name, dest)
     api = config.get_api_proxy(get_std_path(*COPYAID_LOG_DIR))
     for s in sources:
         if not s.exists():

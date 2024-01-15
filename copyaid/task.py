@@ -1,25 +1,68 @@
 import tomli
-from .core import ApiProxy, RequestSettings
+from .core import ApiProxy, PromptSettings
 
 # Python Standard Library
 import filecmp, io, os, subprocess
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional
 from warnings import warn
+
+
+class Task:
+    MAX_NUM_REVS = 7
+
+    def __init__(self, dest: Path):
+        self.dest = dest
+        self.settings: PromptSettings | None = None
+        self.react: list[str] = []
+        self.clean = False
+
+    def rev_dest_glob(self, src: Path) -> str:
+        return str(self.dest) + "/R?/" + src.name
+
+    def _rev_paths(self, src_path: Path) -> list[Path]:
+        ret = list()
+        pattern = str(self.dest) + "/R{}/" + src_path.name
+        for i in range(Task.MAX_NUM_REVS):
+            ret.append(Path(pattern.format(i + 1)))
+        return ret
+
+    def use_saved_revision(self, src: Path) -> Optional[Path]:
+        if not self.clean:
+            R1 = self.dest / "R1" / src.name
+            R2 = self.dest / "R2" / src.name
+            if R1.exists() and not R2.exists():
+                if filecmp.cmp(src, R1, shallow=False):
+                    return R1
+        return None
+
+    def write_revisions(self, src_path: Path, revisions: list[str]) -> None:
+        for i, path in enumerate(self._rev_paths(src_path)):
+            if i < len(revisions):
+                os.makedirs(path.parent, exist_ok=True)
+                with open(path, "w") as file:
+                    file.write(revisions[i])
+            else:
+                path.unlink(missing_ok=True)
+
+    def do_react(self, src_path: Path) -> int:
+        ret = 0
+        if self.react:
+            found_revs = [str(p) for p in self._rev_paths(src_path) if p.exists()]
+            if found_revs:
+                args = [str(src_path)] + found_revs
+                for cmd in self.react:
+                    proc = subprocess.run([cmd] + args, shell=True)
+                    ret = proc.returncode
+                    if ret:
+                        break
+        return ret
 
 
 class Config:
     """
     Class for handling user config files (usually `copyaid.toml`).
     """
-
-    @dataclass
-    class Task:
-        settings: RequestSettings | None
-        react: list[str]
-        clean: bool
-
     def __init__(self, config_file: Path):
         with open(config_file, "rb") as file:
             self._data = tomli.load(file)
@@ -66,18 +109,17 @@ class Config:
             ret.append(cmd)
         return ret
 
-    def get_task(self, task_name: str) -> Optional[Task]:
+    def get_task(self, task_name: str, dest: Path) -> Task:
+        ret = Task(dest)
         task = self._data.get("tasks", {}).get(task_name)
         if task is None:
-            return None
+            raise ValueError(f"Invalid task name {task_name}.")
         path = self._resolve_path(task.get("request"))
-        if path is None:
-            settings = None
-        else:
-            settings = RequestSettings(path)
-        react = self._react_as_commands(task.get("react"))
-        clean = task.get("clean", False)
-        return Config.Task(settings, react, clean)
+        if path:
+            ret.settings = PromptSettings(path)
+            ret.clean = task.get("clean", False)
+        ret.react = self._react_as_commands(task.get("react"))
+        return ret
 
     def help(self) -> str:
         buf = io.StringIO()
@@ -114,61 +156,3 @@ def help_example_react(cmd: str) -> str:
     for k, v in subs.items():
         cmd = cmd.replace(k, v)
     return cmd + "\n"
-
-
-class Task:
-    MAX_NUM_REVS = 7
-
-    def __init__(self, dest: Path, config: Config, task_name: str):
-        tconfig = config.get_task(task_name)
-        if tconfig is None:
-            raise ValueError(f"Invalid task name {task_name}.")
-        self.dest = dest
-        self.settings = tconfig.settings
-        self.react = tconfig.react
-        self.clean = tconfig.clean
-        if self.clean and not self.settings:
-            self.clean = False
-            msg = "Setting clean=true ignored for task {} since there is no request."
-            warn(msg.format(task_name))
-
-    def rev_dest_glob(self, src: Path) -> str:
-        return str(self.dest) + "/R?/" + src.name
-
-    def _rev_paths(self, src_path: Path) -> list[Path]:
-        ret = list()
-        pattern = str(self.dest) + "/R{}/" + src_path.name
-        for i in range(Task.MAX_NUM_REVS):
-            ret.append(Path(pattern.format(i + 1)))
-        return ret
-
-    def use_saved_revision(self, src: Path) -> Optional[Path]:
-        if not self.clean:
-            R1 = self.dest / "R1" / src.name
-            R2 = self.dest / "R2" / src.name
-            if R1.exists() and not R2.exists():
-                if filecmp.cmp(src, R1, shallow=False):
-                    return R1
-        return None
-
-    def write_revisions(self, src_path: Path, revisions: list[str]) -> None:
-        for i, path in enumerate(self._rev_paths(src_path)):
-            if i < len(revisions):
-                os.makedirs(path.parent, exist_ok=True)
-                with open(path, "w") as file:
-                    file.write(revisions[i])
-            else:
-                path.unlink(missing_ok=True)
-
-    def do_react(self, src_path: Path) -> int:
-        ret = 0
-        if self.react is not None:
-            found_revs = [str(p) for p in self._rev_paths(src_path) if p.exists()]
-            if found_revs:
-                args = [str(src_path)] + found_revs
-                for cmd in self.react:
-                    proc = subprocess.run([cmd] + args, shell=True)
-                    ret = proc.returncode
-                    if ret:
-                        break
-        return ret
