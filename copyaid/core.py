@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 from warnings import warn
+from typing_extensions import Protocol
 
 
 class LiveOpenAiApi:
@@ -55,12 +56,10 @@ class ApiProxy:
         self.log_format = log_format
         self._api = ApiProxy.ApiClass(api_key)
 
-    def do_request(self, settings: PromptSettings, src_path: Path) -> list[str]:
-        with open(src_path) as file:
-            source_text = file.read()
-        request = settings.make_openai_request(source_text)
+    def do_request(self, settings: PromptSettings, text: str, name: str) -> list[str]:
+        request = settings.make_openai_request(text)
         response = self._api.query(request)
-        self.log_openai_query(src_path.stem, request, response)
+        self.log_openai_query(name, request, response)
         return [c.message.content for c in response.choices]
 
     def log_openai_query(self, name: str, request: Any, response: Any) -> None:
@@ -128,3 +127,49 @@ class WorkFiles:
                     file.write(revisions[i])
             else:
                 path.unlink(missing_ok=True)
+
+
+class ParsedSource:
+    def __init__(self, contents: str):
+        self.contents = contents
+
+
+class SourceParserProtocol(Protocol):
+    def parse(self, src_path: Path) -> ParsedSource | None:
+        ...
+
+
+class CopyEditor:
+    def __init__(self, api: ApiProxy):
+        self.api = api
+        self._parsers: list[SourceParserProtocol] = []
+        self.init_instruct_id: str | None = None
+        self.instructions: dict[str, PromptSettings | None] = dict()
+
+    @property
+    def has_instructions(self) -> bool:
+        iid = self.init_instruct_id
+        return bool(iid) and iid in self.instructions
+
+    def add_parser(self, p: SourceParserProtocol) -> None:
+        self._parsers.append(p)
+
+    def add_off_instruction(self, instruct_id: str) -> None:
+        self.instructions[instruct_id] = None
+
+    def add_instruction(self, instruct_id: str, settings: Path | str) -> None:
+        self.instructions[instruct_id] = PromptSettings(Path(settings))
+
+    def revise(self, work: WorkFiles) -> None:
+        assert self.init_instruct_id is not None
+        settings = self.instructions[self.init_instruct_id]
+        assert settings
+        parsed = None
+        for parser in self._parsers:
+            parsed = parser.parse(work.src)
+            if parsed:
+                break
+        if parsed is None:
+            raise RuntimeError(f"Not able to parse format of {work.src}")
+        revisions = self.api.do_request(settings, parsed.contents, work.src.stem)
+        work.write_revisions(revisions)

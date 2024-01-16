@@ -1,5 +1,5 @@
 import tomli
-from .core import ApiProxy, PromptSettings, WorkFiles
+from .core import ApiProxy, CopyEditor, ParsedSource, WorkFiles
 
 # Python Standard Library
 import io, os, subprocess
@@ -8,21 +8,25 @@ from typing import Any, Iterable, Optional
 from warnings import warn
 
 
+class DumbSourceParser:
+    def parse(self, src_path: Path) -> ParsedSource | None:
+        with open(src_path) as file:
+          return ParsedSource(file.read())
+
+
 class Task:
-    def __init__(self, api: ApiProxy, react_cmds: list[str]):
-        self.api = api
+    def __init__(self, ed: CopyEditor, react_cmds: list[str]):
+        self._editor = ed
         self._react = react_cmds
-        self.settings: PromptSettings | None = None
         self.clean = False
 
     @property
     def can_request(self) -> bool:
-        return bool(self.settings)
+        return bool(self._editor) and self._editor.has_instructions
 
     def request(self, work: WorkFiles) -> None:
-        assert self.settings
-        revisions = self.api.do_request(self.settings, work.src)
-        work.write_revisions(revisions)
+        assert self.can_request
+        self._editor.revise(work)
 
     def react(self, work: WorkFiles) -> int:
         ret = 0
@@ -93,11 +97,16 @@ class Config:
         if task is None:
             raise ValueError(f"Invalid task name {task_name}.")
         api = ApiProxy(self.get_api_key(), log_path, self.log_format)
-        cmds = self._react_as_commands(task.get("react"))
-        ret = Task(api, cmds)
+        ed = CopyEditor(api)
+        ed.add_parser(DumbSourceParser())
+        ed.add_off_instruction("off")
         path = self._resolve_path(task.get("request"))
         if path:
-            ret.settings = PromptSettings(path)
+            ed.add_instruction("on", path)
+            ed.init_instruct_id = "on"
+        cmds = self._react_as_commands(task.get("react"))
+        ret = Task(ed, cmds)
+        if path:
             ret.clean = task.get("clean", False)
         return ret
 
