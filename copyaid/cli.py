@@ -77,18 +77,20 @@ def main(cmd_line_args: list[str] | None = None) -> int:
     args = parser.parse_args(cmd_line_args)
     if args.dest is None:
         args.dest = Path(get_std_path(*COPYAID_TMP_DIR))
-    ret = check_filename_collision(args.source)
-    if ret == 0:
-        task = config.get_task(args.task, get_std_path(*COPYAID_LOG_DIR))
-        for src in args.source:
-            if not src.exists():
-                print(f"File not found: '{src}'", file=stderr)
-                ret = 2
+    exit_code = check_filename_collision(args.source)
+    if exit_code != 0:
+        return exit_code
+    task = config.get_task(args.task, get_std_path(*COPYAID_LOG_DIR))
+    for src in args.source:
+        if not src.exists():
+            print(f"File not found: '{src}'", file=stderr)
+            exit_code = 2
+            break
+        work = WorkFiles(src, str(args.dest) + "/R{}/" + src.name, MAX_NUM_REVS)
+        exit_code |= do_work(task, work)
+        if exit_code > 1:
                 break
-            ret |= do_work(task, src, args.dest)
-            if ret > 1:
-                    break
-    return ret
+    return exit_code
 
 
 def check_filename_collision(sources: list[Path]) -> int:
@@ -102,15 +104,13 @@ def check_filename_collision(sources: list[Path]) -> int:
     return 0
 
 
-def do_work(task: Task, src: Path, dest: Path) -> int:
-    work = WorkFiles(src, str(dest) + "/R{}/" + src.name, MAX_NUM_REVS)
-    if task.settings:
+def do_work(task: Task, work: WorkFiles) -> int:
+    if task.can_request:
         saved = work.one_revision_equal_to_source()
         if saved and not task.clean:
             print("Reusing saved", saved)
         else:
-            print("OpenAI request for", src)
-            revisions = task.api.do_request(task.settings, src)
-            print("Saving to", work.dest_glob)
-            work.write_revisions(revisions)
-    return task.do_react(work)
+            print("Saving revisions to", work.dest_glob)
+            print(" for source", work.src)
+            task.request(work)
+    return task.react(work)

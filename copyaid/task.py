@@ -9,19 +9,28 @@ from warnings import warn
 
 
 class Task:
-    def __init__(self, api: ApiProxy):
+    def __init__(self, api: ApiProxy, react_cmds: list[str]):
         self.api = api
+        self._react = react_cmds
         self.settings: PromptSettings | None = None
-        self.react: list[str] = []
         self.clean = False
 
-    def do_react(self, work: WorkFiles) -> int:
+    @property
+    def can_request(self) -> bool:
+        return bool(self.settings)
+
+    def request(self, work: WorkFiles) -> None:
+        assert self.settings
+        revisions = self.api.do_request(self.settings, work.src)
+        work.write_revisions(revisions)
+
+    def react(self, work: WorkFiles) -> int:
         ret = 0
-        if self.react:
+        if self._react:
             found_revs = [str(p) for p in work.revisions()]
             if found_revs:
                 args = [str(work.src)] + found_revs
-                for cmd in self.react:
+                for cmd in self._react:
                     proc = subprocess.run([cmd] + args, shell=True)
                     ret = proc.returncode
                     if ret:
@@ -80,15 +89,16 @@ class Config:
         return ret
 
     def get_task(self, task_name: str, log_path: Path) -> Task:
-        ret = Task(ApiProxy(self.get_api_key(), log_path, self.log_format))
         task = self._data.get("tasks", {}).get(task_name)
         if task is None:
             raise ValueError(f"Invalid task name {task_name}.")
+        api = ApiProxy(self.get_api_key(), log_path, self.log_format)
+        cmds = self._react_as_commands(task.get("react"))
+        ret = Task(api, cmds)
         path = self._resolve_path(task.get("request"))
         if path:
             ret.settings = PromptSettings(path)
             ret.clean = task.get("clean", False)
-        ret.react = self._react_as_commands(task.get("react"))
         return ret
 
     def help(self) -> str:
