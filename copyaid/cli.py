@@ -1,4 +1,4 @@
-from .core import ApiProxy, WorkFiles
+from .core import WorkFiles
 from .task import Config, Task
 from .util import get_std_path, copy_package_file
 
@@ -6,8 +6,8 @@ from .util import get_std_path, copy_package_file
 import argparse
 from pathlib import Path
 from sys import stderr
-from typing import Optional, Union
 
+PROGNAME = "copyaid"
 COPYAID_TMP_DIR = ("TMPDIR", "copyaid")
 COPYAID_CONFIG_FILENAME = "copyaid.toml"
 COPYAID_CONFIG_FILE = ("XDG_CONFIG_HOME", "copyaid/" + COPYAID_CONFIG_FILENAME)
@@ -15,38 +15,36 @@ COPYAID_LOG_DIR = ("XDG_STATE_HOME", "copyaid/log")
 MAX_NUM_REVS = 7
 
 
-def preparse_config(prog: str, cmd_line_args: Optional[list[str]]) -> Union[int, Path]:
-    preparser = argparse.ArgumentParser(add_help=False)
-    preparser.add_argument("-c", "--config", type=Path)
-    (args, rest) = preparser.parse_known_args(cmd_line_args)
-    config_path = args.config or Path(get_std_path(*COPYAID_CONFIG_FILE))
-    if config_path.is_dir():
-        config_path = config_path / COPYAID_CONFIG_FILENAME
-    if not config_path.exists():
-        if rest == ["init"]:
-            copy_package_file(COPYAID_CONFIG_FILENAME, config_path)
-            copy_package_file("cold-example.toml", config_path.parent)
-            copy_package_file("warm-example.toml", config_path.parent)
-            copy_package_file("proof-example.toml", config_path.parent)
+class ConfigArgPreparse:
+    def __init__(self, cmd_line_args: list[str] | None):
+        preparser = argparse.ArgumentParser(add_help=False)
+        preparser.add_argument("-c", "--config", type=Path)
+        (args, rest) = preparser.parse_known_args(cmd_line_args)
+        self.config_arg = args.config
+        self.config_path = args.config or Path(get_std_path(*COPYAID_CONFIG_FILE))
+        if self.config_path.is_dir():
+            self.config_path = self.config_path / COPYAID_CONFIG_FILENAME
+        self.init = (rest == ["init"])
+
+    def handle_missing_config(self) -> int:
+        if self.init:
+            copy_package_file(COPYAID_CONFIG_FILENAME, self.config_path)
+            copy_package_file("cold-example.toml", self.config_path.parent)
+            copy_package_file("warm-example.toml", self.config_path.parent)
+            copy_package_file("proof-example.toml", self.config_path.parent)
             return 0
         else:
-            print(f"Config file '{config_path}' not found, run:", file=stderr)
-            if args.config is None:
-                print(f"  {prog} init", file=stderr)
+            print(f"Config file '{self.config_path}' not found, run:", file=stderr)
+            if self.config_arg is None:
+                print(f"  {PROGNAME} init", file=stderr)
             else:
-                print(f"  {prog} --config '{args.config}' init", file=stderr)
+                print(f"  {PROGNAME} --config '{self.config_arg}' init", file=stderr)
             return 2
-    return config_path
 
 
-def main(cmd_line_args: Optional[list[str]] = None) -> int:
-    prog = "copyaid"
-    ret = preparse_config(prog, cmd_line_args)
-    if isinstance(ret, int):
-        return ret
-    config = Config(ret)
+def postconfig_argparser(config: Config) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog=prog,
+        prog=PROGNAME,
         description="CopyAId",
         epilog=config.help(),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -67,12 +65,29 @@ def main(cmd_line_args: Optional[list[str]] = None) -> int:
     )
     parser.add_argument("task", choices=config.task_names, metavar="<task>")
     parser.add_argument("source", type=Path, nargs="+", metavar="<source>")
+    return parser
+
+
+def main(cmd_line_args: list[str] | None = None) -> int:
+    prep = ConfigArgPreparse(cmd_line_args)
+    if not prep.config_path.exists():
+        return prep.handle_missing_config()
+    config = Config(prep.config_path)
+    parser = postconfig_argparser(config)
     args = parser.parse_args(cmd_line_args)
     if args.dest is None:
         args.dest = Path(get_std_path(*COPYAID_TMP_DIR))
     ret = check_filename_collision(args.source)
     if ret == 0:
-        ret = do_task(config, args.task, args.source, args.dest)
+        task = config.get_task(args.task, get_std_path(*COPYAID_LOG_DIR))
+        for src in args.source:
+            if not src.exists():
+                print(f"File not found: '{src}'", file=stderr)
+                ret = 2
+                break
+            ret |= do_work(task, src, args.dest)
+            if ret > 1:
+                    break
     return ret
 
 
@@ -87,27 +102,15 @@ def check_filename_collision(sources: list[Path]) -> int:
     return 0
 
 
-def do_task(config: Config, task_name: str, sources: list[Path], dest: Path) -> int:
-    exit_code = 0
-    task = config.get_task(task_name, dest)
-    log_path = get_std_path(*COPYAID_LOG_DIR)
-    api = ApiProxy(config.get_api_key(), log_path, config.log_format)
-    for src in sources:
-        if not src.exists():
-            print(f"File not found: '{src}'", file=stderr)
-            exit_code = 2
-            break
-        work = WorkFiles(src, str(dest) + "/R{}/" + src.name, MAX_NUM_REVS)
-        if task.settings:
-            saved = work.one_revision_equal_to_source()
-            if saved and not task.clean:
-                print("Reusing saved", saved)
-            else:
-                print("OpenAI request for", src)
-                revisions = api.do_request(task.settings, src)
-                print("Saving to", work.dest_glob)
-                work.write_revisions(revisions)
-        exit_code |= task.do_react(work)
-        if exit_code > 1:
-            break
-    return exit_code
+def do_work(task: Task, src: Path, dest: Path) -> int:
+    work = WorkFiles(src, str(dest) + "/R{}/" + src.name, MAX_NUM_REVS)
+    if task.settings:
+        saved = work.one_revision_equal_to_source()
+        if saved and not task.clean:
+            print("Reusing saved", saved)
+        else:
+            print("OpenAI request for", src)
+            revisions = task.api.do_request(task.settings, src)
+            print("Saving to", work.dest_glob)
+            work.write_revisions(revisions)
+    return task.do_react(work)

@@ -1,5 +1,5 @@
 import tomli
-from .core import PromptSettings, WorkFiles
+from .core import ApiProxy, PromptSettings, WorkFiles
 
 # Python Standard Library
 import io, os, subprocess
@@ -9,8 +9,8 @@ from warnings import warn
 
 
 class Task:
-    def __init__(self, dest: Path):
-        self.dest = dest
+    def __init__(self, api: ApiProxy):
+        self.api = api
         self.settings: PromptSettings | None = None
         self.react: list[str] = []
         self.clean = False
@@ -79,8 +79,8 @@ class Config:
             ret.append(cmd)
         return ret
 
-    def get_task(self, task_name: str, dest: Path) -> Task:
-        ret = Task(dest)
+    def get_task(self, task_name: str, log_path: Path) -> Task:
+        ret = Task(ApiProxy(self.get_api_key(), log_path, self.log_format))
         task = self._data.get("tasks", {}).get(task_name)
         if task is None:
             raise ValueError(f"Invalid task name {task_name}.")
