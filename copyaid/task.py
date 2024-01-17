@@ -1,5 +1,5 @@
 import tomli
-from .core import ApiProxy, CopyEditor, ParsedSource, WorkFiles
+from .core import ApiProxy, CopyEditor, ParsedSource, TextSegment, WorkFiles
 
 # Python Standard Library
 import io, os, subprocess
@@ -10,8 +10,10 @@ from warnings import warn
 
 class DumbSourceParser:
     def parse(self, src_path: Path) -> ParsedSource | None:
+        ret = ParsedSource()
         with open(src_path) as file:
-          return ParsedSource(file.read())
+            ret.segments.append(TextSegment(file.read()))
+        return ret
 
 
 class Task:

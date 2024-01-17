@@ -2,9 +2,10 @@ import tomli
 
 # Python Standard Library
 import filecmp, json, os
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, TextIO
 from warnings import warn
 from typing_extensions import Protocol
 
@@ -28,6 +29,10 @@ class PromptSettings:
         self._openai = data.get("openai")
         self._prepend = data.get("prepend", "")
         self._append = data.get("append", "")
+
+    @property
+    def num_revisions(self) -> int:
+        return int(self._openai.get("n", 1)) if self._openai else 1
 
     def make_openai_request(self, source: str) -> dict[str, Any]:
         assert isinstance(self._openai, dict)
@@ -107,6 +112,7 @@ class WorkFiles:
         dest = str(dest)
         self._dests = [Path(dest.format(i + 1)) for i in range(max_num_revs)]
         self.dest_glob = dest.format("?")
+        self._files: list[TextIO] = list()
 
     def revisions(self) -> list[Path]:
         return [p for p in self._dests if p.exists()]
@@ -119,19 +125,47 @@ class WorkFiles:
                 ret = one
         return ret
 
-    def write_revisions(self, revisions: list[str]) -> None:
+    def open_new_dests(self, n: int = 1) -> None:
+        assert n > 0
+        self._files = []
         for i, path in enumerate(self._dests):
-            if i < len(revisions):
+            if i < n:
                 os.makedirs(path.parent, exist_ok=True)
-                with open(path, "w") as file:
-                    file.write(revisions[i])
+                self._files.append(open(path, "w"))
             else:
                 path.unlink(missing_ok=True)
 
+    def write_dest(self, text: str, i: int = 1) -> None:
+        self._files[i].write(text)
+
+    def close_dests(self) -> None:
+        for f in self._files:
+            f.close()
+        self._files = []
+
+
+@dataclass
+class Copybreak:
+    raw_line: str
+    instruction: str | None
+
+
+class TextSegment:
+    def __init__(self, text: str):
+        self.copybreak: Copybreak | None = None
+        self.text = text
+
 
 class ParsedSource:
-    def __init__(self, contents: str):
-        self.contents = contents
+    def __init__(self) -> None:
+        self.segments: list[TextSegment] = list()
+
+    def instructions(self) -> set[str]:
+        ret = set()
+        for seg in self.segments:
+            if seg.copybreak and seg.copybreak.instruction:
+                ret.add(seg.copybreak.instruction)
+        return ret
 
 
 class SourceParserProtocol(Protocol):
@@ -171,5 +205,14 @@ class CopyEditor:
                 break
         if parsed is None:
             raise RuntimeError(f"Not able to parse format of {work.src}")
-        revisions = self.api.do_request(settings, parsed.contents, work.src.stem)
-        work.write_revisions(revisions)
+        work.open_new_dests(settings.num_revisions)
+        for si, seg in enumerate(parsed.segments):
+            if seg.copybreak:
+                for ri in range(settings.num_revisions):
+                    work.write_dest(seg.copybreak.raw_line, ri)
+            log_name = "{}.{}".format(work.src.stem, si)
+            revisions = self.api.do_request(settings, seg.text, log_name)
+            assert len(revisions) == settings.num_revisions
+            for ri, rev in enumerate(revisions):
+                work.write_dest(rev, ri)
+        work.close_dests()
