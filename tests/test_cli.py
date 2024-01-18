@@ -2,6 +2,7 @@ import pytest
 
 import copyaid.cli
 
+import os
 from types import SimpleNamespace
 
 SOURCE_TEXT = "Jupiter big.\nJupiter a planet.\nJupiter gas.\n"
@@ -67,3 +68,20 @@ def test_copybreak_off_tex(tmp_path):
     src_text = SOURCE_TEXT + copybreak + SOURCE_TEXT
     got = get_revision(tmp_path / "source.tex", src_text)
     assert got == EXPECTED_TEXT + copybreak + SOURCE_TEXT
+
+
+def test_reuse_no_clean(tmp_path):
+    src_path = tmp_path / "source.txt"
+    dest_path = tmp_path / "R1" / src_path.name
+    open(src_path, "w").write(SOURCE_TEXT)
+    os.makedirs(dest_path.parent, exist_ok=True)
+    open(dest_path, "w").write(SOURCE_TEXT)
+    retcode = copyaid.cli.main([
+        "proof",
+        str(src_path),
+        "--dest", str(tmp_path),
+        "--config", "tests/mock_config.toml",
+    ])
+    assert retcode == 0
+    got = open(src_path.parent / "R1" / src_path.name).read()
+    assert got == SOURCE_TEXT

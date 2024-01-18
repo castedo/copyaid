@@ -120,7 +120,7 @@ class WorkFiles:
 
     def one_revision_equal_to_source(self) -> Path | None:
         ret = None
-        if len(self._dests) == 1:
+        if len(self._dests) == 1 or not self._dests[1].exists():
             one = self._dests[0]
             if one.exists() and filecmp.cmp(self.src, one, shallow=False):
                 ret = one
