@@ -1,3 +1,4 @@
+from copyaid.diff import diffadapt
 import tomli
 
 # Python Standard Library
@@ -147,13 +148,17 @@ class WorkFiles:
 @dataclass
 class Copybreak:
     raw_line: str
-    instruction: str | None
+    args: list[str]
+
+    @property
+    def instruction(self) -> str | None:
+        return self.args[0] if self.args else None
 
 
+@dataclass
 class TextSegment:
-    def __init__(self, text: str):
-        self.copybreak: Copybreak | None = None
-        self.text = text
+    copybreak: Copybreak | None
+    text: str
 
 
 class ParsedSource:
@@ -169,14 +174,81 @@ class ParsedSource:
 
 
 class SourceParserProtocol(Protocol):
-    def parse(self, src_path: Path) -> ParsedSource | None:
+    def parse(self, src: Path) -> ParsedSource | None:
         ...
+
+
+def parse_source(parsers: list[SourceParserProtocol], src: Path) -> ParsedSource:
+    for parser in parsers:
+        if ret := parser.parse(src):
+            return ret
+    raise RuntimeError(f"Not able to parse format of {src}")
+
+
+class TrivialParser:
+    def parse(self, src_path: Path) -> ParsedSource | None:
+        ret = ParsedSource()
+        with open(src_path) as file:
+            ret.segments.append(TextSegment(None, file.read()))
+        return ret
+
+
+@dataclass
+class CopybreakSyntax:
+    ids: list[str]
+    prefix: str
+    suffix: str | None
+
+    def parse(self, line: str) -> Copybreak | None:
+        s = line.strip()
+        if not s.startswith(self.prefix):
+            return None
+        s = s[len(self.prefix):]
+        idx = 0
+        if self.suffix:
+            idx = s.find(self.suffix)
+            if idx > 0:
+                s = s[:idx]
+        candidate = Copybreak(line, s.split())
+        if candidate.instruction not in self.ids:
+            return None
+        if idx < 0:
+            warn("Copybreak line missing suffix '{}'".format(self.suffix))
+        return candidate
+
+
+class SimpleParser:
+    def __init__(self, copybreak: CopybreakSyntax):
+        self.copybreak = copybreak
+        self.extensions_filter: list[str] | None = None
+
+    def parse(self, src: Path) -> ParsedSource | None:
+        if self.extensions_filter is not None:
+            if not src.suffix:
+                return None
+            if src.suffix[1:] not in self.extensions_filter:
+                return None
+        ret = ParsedSource()
+        pending_copybreak = None
+        pending_lines: list[str] = list()
+        with open(src) as file:
+            for line in file:
+                if new_copybreak := self.copybreak.parse(line):
+                    segment = TextSegment(pending_copybreak, "".join(pending_lines))
+                    ret.segments.append(segment)
+                    pending_copybreak = new_copybreak
+                    pending_lines = list()
+                else:
+                    pending_lines.append(line)
+            segment = TextSegment(pending_copybreak, "".join(pending_lines))
+            ret.segments.append(segment)
+        return ret
 
 
 class CopyEditor:
     def __init__(self, api: ApiProxy):
         self.api = api
-        self._parsers: list[SourceParserProtocol] = []
+        self.parsers: list[SourceParserProtocol] = []
         self.init_instruct_id: str | None = None
         self.instructions: dict[str, PromptSettings | None] = dict()
 
@@ -184,9 +256,6 @@ class CopyEditor:
     def has_instructions(self) -> bool:
         iid = self.init_instruct_id
         return bool(iid) and iid in self.instructions
-
-    def add_parser(self, p: SourceParserProtocol) -> None:
-        self._parsers.append(p)
 
     def add_off_instruction(self, instruct_id: str) -> None:
         self.instructions[instruct_id] = None
@@ -198,13 +267,7 @@ class CopyEditor:
         assert self.init_instruct_id is not None
         settings = self.instructions[self.init_instruct_id]
         assert settings
-        parsed = None
-        for parser in self._parsers:
-            parsed = parser.parse(work.src)
-            if parsed:
-                break
-        if parsed is None:
-            raise RuntimeError(f"Not able to parse format of {work.src}")
+        parsed = parse_source(self.parsers, work.src)
         work.open_new_dests(settings.num_revisions)
         for si, seg in enumerate(parsed.segments):
             if seg.copybreak:
@@ -213,6 +276,7 @@ class CopyEditor:
             log_name = "{}.{}".format(work.src.stem, si)
             revisions = self.api.do_request(settings, seg.text, log_name)
             assert len(revisions) == settings.num_revisions
+            revisions = diffadapt(seg.text, revisions)
             for ri, rev in enumerate(revisions):
                 work.write_dest(rev, ri)
         work.close_dests()

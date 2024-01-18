@@ -8,7 +8,6 @@ SOURCE_TEXT = "Jupiter big.\nJupiter a planet.\nJupiter gas.\n"
 MOCK_COMPLETION = "Jupiter is a big planet made of gas."
 EXPECTED_TEXT = "Jupiter is\na big planet made of\ngas.\n"
 
-
 class MockApi:
     def __init__(self, api_key):
         pass
@@ -27,15 +26,26 @@ class MockApi:
 
 copyaid.core.ApiProxy.ApiClass = MockApi
 
-def test_main(tmp_path):
-    srcpath = tmp_path / "source.txt"
-    open(srcpath, "w").write(SOURCE_TEXT)
+
+def get_revision(src_path, src_text):
+    open(src_path, "w").write(src_text)
     retcode = copyaid.cli.main([
         "proof",
-        str(srcpath),
-        "--dest", str(tmp_path),
+        str(src_path),
+        "--dest", str(src_path.parent),
         "--config", "tests/mock_config.toml",
     ])
     assert retcode == 0
-    got = open(tmp_path / "R1" / srcpath.name).read()
+    return open(src_path.parent / "R1" / src_path.name).read()
+
+
+def test_main(tmp_path):
+    got = get_revision(tmp_path / "source.txt", SOURCE_TEXT)
     assert got == EXPECTED_TEXT
+
+
+def test_copybreak_md(tmp_path):
+    copybreak = "<!-- copybreak -->\n"
+    src_text = SOURCE_TEXT + copybreak + SOURCE_TEXT
+    got = get_revision(tmp_path / "source.md", src_text)
+    assert got == EXPECTED_TEXT + copybreak + EXPECTED_TEXT

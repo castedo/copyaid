@@ -1,19 +1,11 @@
 import tomli
-from .core import ApiProxy, CopyEditor, ParsedSource, TextSegment, WorkFiles
+from .core import ApiProxy, CopybreakSyntax, CopyEditor, SimpleParser, TrivialParser, WorkFiles
 
 # Python Standard Library
 import io, os, subprocess
 from pathlib import Path
 from typing import Any, Iterable, Optional
 from warnings import warn
-
-
-class DumbSourceParser:
-    def parse(self, src_path: Path) -> ParsedSource | None:
-        ret = ParsedSource()
-        with open(src_path) as file:
-            ret.segments.append(TextSegment(file.read()))
-        return ret
 
 
 class Task:
@@ -100,7 +92,10 @@ class Config:
             raise ValueError(f"Invalid task name {task_name}.")
         api = ApiProxy(self.get_api_key(), log_path, self.log_format)
         ed = CopyEditor(api)
-        ed.add_parser(DumbSourceParser())
+        cbr_syntax = CopybreakSyntax(["copybreak"], "<!--", "-->")
+        parser = SimpleParser(cbr_syntax)
+        parser.extensions_filter = ["md"]
+        ed.parsers = [parser, TrivialParser()]
         ed.add_off_instruction("off")
         path = self._resolve_path(task.get("request"))
         if path:
