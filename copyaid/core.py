@@ -224,9 +224,7 @@ class SimpleParser:
 
     def parse(self, src: Path) -> ParsedSource | None:
         if self.extensions_filter is not None:
-            if not src.suffix:
-                return None
-            if src.suffix[1:] not in self.extensions_filter:
+            if src.suffix not in self.extensions_filter:
                 return None
         ret = ParsedSource()
         pending_copybreak = None

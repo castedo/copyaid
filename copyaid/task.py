@@ -1,5 +1,8 @@
 import tomli
-from .core import ApiProxy, CopybreakSyntax, CopyEditor, SimpleParser, TrivialParser, WorkFiles
+from .core import (
+    ApiProxy, CopybreakSyntax, CopyEditor, SimpleParser, SourceParserProtocol,
+    TrivialParser, WorkFiles
+)
 
 # Python Standard Library
 import io, os, subprocess
@@ -86,16 +89,26 @@ class Config:
             ret.append(cmd)
         return ret
 
+    def _get_parsers(self) -> list[SourceParserProtocol]:
+        ret = list()
+        formats = self._data.get("formats", {})
+        for fname, f in formats.items():
+            if "copybreak" not in f:
+                raise SyntaxError(f"Format '{fname}' table missing 'copybreak' key")
+            cbr = f["copybreak"]
+            cbr_syntax = CopybreakSyntax(cbr["ids"], cbr["prefix"], cbr.get("suffix"))
+            parser = SimpleParser(cbr_syntax)
+            parser.extensions_filter = f.get("extensions")
+            ret.append(parser)
+        return ret + [TrivialParser()]
+
     def get_task(self, task_name: str, log_path: Path) -> Task:
         task = self._data.get("tasks", {}).get(task_name)
         if task is None:
             raise ValueError(f"Invalid task name {task_name}.")
         api = ApiProxy(self.get_api_key(), log_path, self.log_format)
         ed = CopyEditor(api)
-        cbr_syntax = CopybreakSyntax(["copybreak"], "<!--", "-->")
-        parser = SimpleParser(cbr_syntax)
-        parser.extensions_filter = ["md"]
-        ed.parsers = [parser, TrivialParser()]
+        ed.parsers = self._get_parsers()
         ed.add_off_instruction("off")
         path = self._resolve_path(task.get("request"))
         if path:

@@ -8,6 +8,21 @@
 # log_format = "json"
 # log_format = "jsoml"
 
+
+# Different file formats, detected by file extension, have different copybreak syntax
+
+[formats.markdown]
+extensions = [".md"]
+copybreak.ids = ["copybreak", "cbr"]
+copybreak.prefix = "<!--"
+copybreak.suffix = "-->"
+
+[formats.tex]
+extensions = [".tex"]
+copybreak.ids = ["copybreak", "cbr"]
+copybreak.prefix = "%%"
+
+
 # For each task:
 # 1) If clean = true, then remove any previously saved revisions.
 # 2) OpenAI API request will be made if:
@@ -25,16 +40,17 @@ freeze = { react = "cp-src-over-revs" }
 [tasks.stomp]
 clean = true
 request = "cold-example.toml"
-react = ["diffadapt", "cp-rev-over-src"]
+react = ["cp-rev-over-src"]
 
 [tasks.it]
 clean = true
 request = "warm-example.toml"
-react = ["diffadapt", "vimdiff"]
+react = ["vimdiff"]
 
 [tasks.proof]
 request = "proof-example.toml"
-react = ["diffadapt", "vim-if-diff"]
+react = ["vim-if-diff"]
+
 
 # Named (Bash) shell commands lines to be run on saved revisions from requests.
 # "$0" expands to the path of the original source file.
@@ -49,4 +65,3 @@ echo = 'echo "$@"'
 rm = 'rm "$@"'
 cp-rev-over-src = 'cp "$1" "$0"'
 cp-src-over-revs = 'rm "$@" && cp "$0" "$1"'
-diffadapt = 'diffadapt -c OK "$0" "$@"'
