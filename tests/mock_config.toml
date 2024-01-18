@@ -5,11 +5,11 @@ request = "../copyaid/data/cold-example.toml"
 
 [formats.markdown]
 extensions = [".md"]
-copybreak.ids = ["copybreak", "cbr"]
+copybreak.keywords = ["copybreak", "cbr"]
 copybreak.prefix = "<!--"
 copybreak.suffix = "-->"
 
 [formats.tex]
 extensions = [".tex"]
-copybreak.ids = ["copybreak", "cbr"]
+copybreak.keywords = ["copybreak", "cbr"]
 copybreak.prefix = "%%"

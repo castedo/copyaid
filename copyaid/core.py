@@ -151,8 +151,12 @@ class Copybreak:
     args: list[str]
 
     @property
-    def instruction(self) -> str | None:
+    def keyword(self) -> str | None:
         return self.args[0] if self.args else None
+
+    @property
+    def instruction(self) -> str | None:
+        return self.args[1] if len(self.args) > 1 else None
 
 
 @dataclass
@@ -195,7 +199,7 @@ class TrivialParser:
 
 @dataclass
 class CopybreakSyntax:
-    ids: list[str]
+    keywords: list[str]
     prefix: str
     suffix: str | None
 
@@ -210,11 +214,15 @@ class CopybreakSyntax:
             if idx > 0:
                 s = s[:idx]
         candidate = Copybreak(line, s.split())
-        if candidate.instruction not in self.ids:
+        if candidate.keyword not in self.keywords:
             return None
         if idx < 0:
             warn("Copybreak line missing suffix '{}'".format(self.suffix))
         return candidate
+
+    @staticmethod
+    def from_POD(pod: dict[str, Any]) -> "CopybreakSyntax":
+        return CopybreakSyntax(pod["keywords"], pod["prefix"], pod.get("suffix"))
 
 
 class SimpleParser:
@@ -242,39 +250,74 @@ class SimpleParser:
             ret.segments.append(segment)
         return ret
 
+    @staticmethod
+    def from_POD(pod: dict[str, Any]) -> "SimpleParser":
+        ret = SimpleParser(CopybreakSyntax.from_POD(pod["copybreak"]))
+        ret.extensions_filter = pod.get("extensions")
+        return ret
+
 
 class CopyEditor:
     def __init__(self, api: ApiProxy):
         self.api = api
         self.parsers: list[SourceParserProtocol] = []
-        self.init_instruct_id: str | None = None
-        self.instructions: dict[str, PromptSettings | None] = dict()
+        self._instructions: dict[str, PromptSettings | None] = dict()
 
     @property
     def has_instructions(self) -> bool:
-        iid = self.init_instruct_id
-        return bool(iid) and iid in self.instructions
+        return any(bool(p) for p in self._instructions.values())
 
-    def add_off_instruction(self, instruct_id: str) -> None:
-        self.instructions[instruct_id] = None
+    def set_instruction(self, instruction: str, settings: Path | str) -> None:
+        self._instructions[instruction] = PromptSettings(Path(settings))
 
-    def add_instruction(self, instruct_id: str, settings: Path | str) -> None:
-        self.instructions[instruct_id] = PromptSettings(Path(settings))
+    def add_off_instruction(self, instruction: str) -> None:
+        self._instructions[instruction] = None
+
+    def set_init_instruction(self, instruction: str | None) -> None:
+        settings = self._instructions[instruction] if instruction else None
+        self._instructions[""] = settings
+
+    def _num_revisions(self, src: ParsedSource) -> int:
+        ret = 1
+        for iid in src.instructions():
+            if iid not in self._instructions:
+                raise SyntaxError(f"{iid} is not a configured instruction.")
+            if instr := self._instructions.get(iid):
+                assert instr.num_revisions > 0
+                if ret == 1:
+                    if instr.num_revisions > ret:
+                        ret = instr.num_revisions 
+                elif instr.num_revisions > 1:
+                    if instr.num_revisions < ret:
+                        ret = instr.num_revisions 
+                        warn(f"Instruction {iid} sets number of revisions to {ret}.")
+                    elif instr.num_revisions > ret:
+                        msg = "Only {} of {} revisions used with instruction {}."
+                        warn(msg.format(ret, instr.num_revisions, iid))
+        return ret
 
     def revise(self, work: WorkFiles) -> None:
-        assert self.init_instruct_id is not None
-        settings = self.instructions[self.init_instruct_id]
-        assert settings
         parsed = parse_source(self.parsers, work.src)
-        work.open_new_dests(settings.num_revisions)
+        num_revisions = self._num_revisions(parsed)
+        work.open_new_dests(num_revisions)
+        cur_settings = self._instructions.get("")
         for si, seg in enumerate(parsed.segments):
             if seg.copybreak:
-                for ri in range(settings.num_revisions):
+                for ri in range(num_revisions):
                     work.write_dest(seg.copybreak.raw_line, ri)
+                if seg.copybreak.instruction:
+                    cur_settings = self._instructions[seg.copybreak.instruction]
             log_name = "{}.{}".format(work.src.stem, si)
-            revisions = self.api.do_request(settings, seg.text, log_name)
-            assert len(revisions) == settings.num_revisions
-            revisions = diffadapt(seg.text, revisions)
+            if cur_settings:
+                revisions = self.api.do_request(cur_settings, seg.text, log_name)
+                if len(revisions) > num_revisions:
+                    revisions = revisions[:num_revisions]
+                elif len(revisions) == 1 and num_revisions > 1:
+                    revisions = list(revisions[0]) * num_revisions
+                assert len(revisions) == num_revisions
+                revisions = diffadapt(seg.text, revisions)
+            else:
+                revisions = [seg.text] * num_revisions
             for ri, rev in enumerate(revisions):
                 work.write_dest(rev, ri)
         work.close_dests()

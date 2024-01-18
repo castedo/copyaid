@@ -95,11 +95,7 @@ class Config:
         for fname, f in formats.items():
             if "copybreak" not in f:
                 raise SyntaxError(f"Format '{fname}' table missing 'copybreak' key")
-            cbr = f["copybreak"]
-            cbr_syntax = CopybreakSyntax(cbr["ids"], cbr["prefix"], cbr.get("suffix"))
-            parser = SimpleParser(cbr_syntax)
-            parser.extensions_filter = f.get("extensions")
-            ret.append(parser)
+            ret.append(SimpleParser.from_POD(f))
         return ret + [TrivialParser()]
 
     def get_task(self, task_name: str, log_path: Path) -> Task:
@@ -112,8 +108,8 @@ class Config:
         ed.add_off_instruction("off")
         path = self._resolve_path(task.get("request"))
         if path:
-            ed.add_instruction("on", path)
-            ed.init_instruct_id = "on"
+            ed.set_instruction("on", path)
+            ed.set_init_instruction("on")
         cmds = self._react_as_commands(task.get("react"))
         ret = Task(ed, cmds)
         if path:
