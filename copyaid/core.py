@@ -138,6 +138,7 @@ class WorkFiles:
 
     def write_dest(self, text: str, i: int = 1) -> None:
         self._files[i].write(text)
+        self._files[i].flush()
 
     def close_dests(self) -> None:
         for f in self._files:
@@ -192,6 +193,7 @@ def parse_source(parsers: list[SourceParserProtocol], src: Path) -> ParsedSource
 class TrivialParser:
     def parse(self, src_path: Path) -> ParsedSource | None:
         ret = ParsedSource()
+        warn(f"No file format configured for: {src_path}")
         with open(src_path) as file:
             ret.segments.append(TextSegment(None, file.read()))
         return ret
@@ -279,6 +281,8 @@ class CopyEditor:
 
     def _num_revisions(self, src: ParsedSource) -> int:
         ret = 1
+        if init_instr := self._instructions.get(""):
+            ret = init_instr.num_revisions 
         for iid in src.instructions():
             if iid not in self._instructions:
                 raise SyntaxError(f"{iid} is not a configured instruction.")
@@ -308,7 +312,7 @@ class CopyEditor:
                 if seg.copybreak.instruction:
                     cur_settings = self._instructions[seg.copybreak.instruction]
             log_name = "{}.{}".format(work.src.stem, si)
-            if cur_settings:
+            if cur_settings and len(seg.text.strip()):
                 revisions = self.api.do_request(cur_settings, seg.text, log_name)
                 if len(revisions) > num_revisions:
                     revisions = revisions[:num_revisions]
