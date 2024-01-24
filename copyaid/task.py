@@ -1,14 +1,13 @@
 import tomli
 from .core import (
     ApiProxy, CopybreakSyntax, CopyEditor, SimpleParser, SourceParserProtocol,
-    TrivialParser, WorkFiles
+    TrivialParser, WorkFiles, warning
 )
 
 # Python Standard Library
 import io, os, subprocess
 from pathlib import Path
 from typing import Any, Iterable, Optional
-from warnings import warn
 
 
 class Task:
@@ -96,6 +95,8 @@ class Config:
             if "copybreak" not in f:
                 raise SyntaxError(f"Format '{fname}' table missing 'copybreak' key")
             ret.append(SimpleParser.from_POD(f))
+        if not ret:
+            warning("No file formats specified in config file.")
         return ret + [TrivialParser()]
 
     def get_task(self, task_name: str, log_path: Path) -> Task:

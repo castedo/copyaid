@@ -2,13 +2,16 @@ from copyaid.diff import diffadapt
 import tomli
 
 # Python Standard Library
-import filecmp, json, os
+import filecmp, json, logging, os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional, TextIO
-from warnings import warn
 from typing_extensions import Protocol
+
+
+LOGGER = logging.getLogger('copyaid')
+warning = LOGGER.warning
 
 
 class LiveOpenAiApi:
@@ -103,7 +106,7 @@ class ApiProxy:
                 json.dump(data, file, indent=4, ensure_ascii=False)
                 file.write("\n")
         else:
-            warn("Unsupported log format: {}".format(self.log_format))
+            warning("Unsupported log format: {}".format(self.log_format))
 
 
 class WorkFiles:
@@ -193,7 +196,7 @@ def parse_source(parsers: list[SourceParserProtocol], src: Path) -> ParsedSource
 class TrivialParser:
     def parse(self, src_path: Path) -> ParsedSource | None:
         ret = ParsedSource()
-        warn(f"No file format configured for: {src_path}")
+        warning(f"No file format configured for: {src_path}")
         with open(src_path) as file:
             ret.segments.append(TextSegment(None, file.read()))
         return ret
@@ -219,7 +222,7 @@ class CopybreakSyntax:
         if candidate.keyword not in self.keywords:
             return None
         if idx < 0:
-            warn("Copybreak line missing suffix '{}'".format(self.suffix))
+            warning("Copybreak line missing suffix '{}'".format(self.suffix))
         return candidate
 
     @staticmethod
@@ -294,10 +297,10 @@ class CopyEditor:
                 elif instr.num_revisions > 1:
                     if instr.num_revisions < ret:
                         ret = instr.num_revisions 
-                        warn(f"Instruction {iid} sets number of revisions to {ret}.")
+                        warning(f"Instruction {iid} sets number of revisions to {ret}.")
                     elif instr.num_revisions > ret:
                         msg = "Only {} of {} revisions used with instruction {}."
-                        warn(msg.format(ret, instr.num_revisions, iid))
+                        warning(msg.format(ret, instr.num_revisions, iid))
         return ret
 
     def revise(self, work: WorkFiles) -> None:

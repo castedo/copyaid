@@ -3,7 +3,7 @@ from .task import Config, Task
 from .util import get_std_path, copy_package_file
 
 # Python standard libraries
-import argparse
+import argparse, logging
 from pathlib import Path
 from sys import stderr
 
@@ -69,6 +69,7 @@ def postconfig_argparser(config: Config) -> argparse.ArgumentParser:
 
 
 def main(cmd_line_args: list[str] | None = None) -> int:
+    logging.basicConfig()
     prep = ConfigArgPreparse(cmd_line_args)
     if not prep.config_path.exists():
         return prep.handle_missing_config()
