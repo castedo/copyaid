@@ -14,7 +14,6 @@ class Task:
     def __init__(self, ed: CopyEditor, react_cmds: list[str]):
         self._editor = ed
         self._react = react_cmds
-        self.clean = False
 
     @property
     def can_request(self) -> bool:
@@ -103,6 +102,8 @@ class Config:
         task = self._data.get("tasks", {}).get(task_name)
         if task is None:
             raise ValueError(f"Invalid task name {task_name}.")
+        if "clean" in task:
+            warning("Configuration setting 'clean' has been deprecated.")
         api = ApiProxy(self.get_api_key(), log_path, self.log_format)
         ed = CopyEditor(api)
         ed.parsers = self._get_parsers()
@@ -112,10 +113,7 @@ class Config:
             ed.set_instruction("on", path)
             ed.set_init_instruction("on")
         cmds = self._react_as_commands(task.get("react"))
-        ret = Task(ed, cmds)
-        if path:
-            ret.clean = task.get("clean", False)
-        return ret
+        return Task(ed, cmds)
 
     def help(self) -> str:
         buf = io.StringIO()
@@ -127,10 +125,7 @@ class Config:
             task = self._data["tasks"][name]
             path = self._resolve_path(task.get("request"))
             if path:
-                if task.get("clean"):
-                    buf.write("    Clean & request: ")
-                else:
-                    buf.write("    Request: ")
+                buf.write("    Request: ")
                 buf.write(str(path))
                 buf.write("\n")
             react = self._react_as_commands(task.get("react"))

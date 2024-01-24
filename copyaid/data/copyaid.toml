@@ -24,28 +24,22 @@ copybreak.prefix = "%%"
 
 
 # For each task:
-# 1) If clean = true, then remove any previously saved revisions.
-# 2) OpenAI API request will be made if:
-#    a) settings file provided, and
-#    b) there is no single saved revision which equals the source file.
-# 3) React commands will be run on saved revisions from the API request.
+# 1) If request prompt setting file provided, then make OpenAI API request.
+# 2) React commands will be run on saved revisions from the API request.
 [tasks]
 diff = { react = "diff" }
 vimdiff = { react = "vimdiff" }
 where = { react = "echo" }
 clean = { react = "rm" }
 replace = { react = "cp-rev-over-src" }
-freeze = { react = "cp-src-over-revs" }
 
 [tasks.stomp]
-clean = true
 request = "cold-example.toml"
 react = ["cp-rev-over-src"]
 
 [tasks.it]
-clean = true
 request = "warm-example.toml"
-react = ["vimdiff"]
+react = ["vim-if-diff"]
 
 [tasks.proof]
 request = "proof-example.toml"
@@ -64,4 +58,3 @@ vim-if-diff = 'diff -qs "$0" "$@" || vimdiff "$0" "$@"'
 echo = 'echo "$@"'
 rm = 'rm "$@"'
 cp-rev-over-src = 'cp "$1" "$0"'
-cp-src-over-revs = 'rm "$@" && cp "$0" "$1"'

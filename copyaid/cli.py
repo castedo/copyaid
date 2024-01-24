@@ -107,11 +107,7 @@ def check_filename_collision(sources: list[Path]) -> int:
 
 def do_work(task: Task, work: WorkFiles) -> int:
     if task.can_request:
-        saved = work.one_revision_equal_to_source()
-        if saved and not task.clean:
-            print("Reusing saved", saved)
-        else:
-            print("Saving revisions to", work.dest_glob)
-            print(" for source", work.src)
-            task.request(work)
+        print("Saving revisions to", work.dest_glob)
+        print(" for source", work.src)
+        task.request(work)
     return task.react(work)

@@ -121,14 +121,6 @@ class WorkFiles:
     def revisions(self) -> list[Path]:
         return [p for p in self._dests if p.exists()]
 
-    def one_revision_equal_to_source(self) -> Path | None:
-        ret = None
-        if len(self._dests) == 1 or not self._dests[1].exists():
-            one = self._dests[0]
-            if one.exists() and filecmp.cmp(self.src, one, shallow=False):
-                ret = one
-        return ret
-
     def open_new_dests(self, n: int = 1) -> None:
         assert n > 0
         self._files = []
@@ -288,7 +280,7 @@ class CopyEditor:
             ret = init_instr.num_revisions 
         for iid in src.instructions():
             if iid not in self._instructions:
-                raise SyntaxError(f"{iid} is not a configured instruction.")
+                raise SyntaxError(f"'{iid}' is not a configured copybreak instruction.")
             if instr := self._instructions.get(iid):
                 assert instr.num_revisions > 0
                 if ret == 1:
