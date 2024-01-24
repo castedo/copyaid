@@ -1,3 +1,5 @@
+<!-- copybreak off -->
+
 # Get Started
 
 
@@ -65,8 +67,10 @@ cat test.md
 #   Software documentation is helpful.
 ```
 
-You are set up!
----------------
+<!-- copybreak off -->
+
+Conclusion
+----------
 
 You're now ready to run Copy**AI**d on your own source text files.
 The `it` task defaults to using `vimdiff`.
@@ -83,8 +87,5 @@ To learn about the differences, read the [Hot Copyediting page](hot.md).
 To customize your tasks, refer to the [configuration page](config.md).
 
 !!! Warning
-    The OpenAI model selected in the request settings file
-    may require splitting large text files into smaller ones, for example,
-    by using the LaTeX `\input` macro.
-    This can also help reduce costs, as OpenAI charges based on the number of tokens (word parts).
-
+    Be sure to use [copybreaks](copybreaks.md) and/or ensure that your document consists
+    of small text source files.

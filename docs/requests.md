@@ -1,3 +1,5 @@
+<!-- copybreak off -->
+
 # OpenAI API Request Settings
 
 Values in a request settings file correspond to values sent to the
@@ -10,13 +12,14 @@ On most Linux distributions, these files are located in `~/.config/copyaid/`.
 
 For detailed information on the TOML format, visit [toml.io](https://toml.io).
 
+<!-- copybreak on -->
 
 ## Settings
 
 `chat_system`
 :   The instructions sent to the OpenAI API.
     This value is sent as the first message in the request.
-    It will have role `system`.
+    It will have the role `system`.
     The source text file is sent as the second message with the role `user`.
 
 `max_tokens_ratio`
@@ -26,19 +29,20 @@ For detailed information on the TOML format, visit [toml.io](https://toml.io).
     and multiply that estimate by `max_tokens_ratio` to determine the
     `max_tokens` value for the API request output.
 
-`openai.n`
-:   The `n` value specifies the number of candidate revisions to save.
-    If you choose `n = 1`, you probably also want `temperature = 0`.
-
-`openai.temperature`
-:   OpenAI API sampling temperature.
-    For more details on this setting, refer to [Hot Copyediting](hot.md).
-
 `openai.model`
 :   The OpenAI API
     [chat completion compatible model](https://platform.openai.com/docs/models/model-endpoint-compatibility)
     to be used.
 
+`openai.temperature`
+:   OpenAI API sampling temperature.
+    For more details on this setting, refer to [Hot Copyediting](hot.md).
+
+`openai.n`
+:   The optional `n` value specifies the number of parallel revisions to request.
+    The default is `n = 1`. In this case, you probably also want `temperature = 0`.
+
+<!-- copybreak off -->
 
 ## Older settings
 

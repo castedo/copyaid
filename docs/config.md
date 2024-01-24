@@ -1,3 +1,5 @@
+<!-- copybreak off -->
+
 # Configuration
 
 To view help on the current configuration, use the command `copyaid -h`.
@@ -6,6 +8,8 @@ On POSIX systems, the default location for the configuration file is
 `~/.config/copyaid/copyaid.toml`.
 For detailed information on the TOML format, visit [toml.io](https://toml.io).
 
+<!-- copybreak on -->
+
 ## Initial Configuration
 
 After running `copyaid init`, a heavily commented initial configuration is created
@@ -13,13 +17,13 @@ along with three example [request settings files](requests.md).
 Three default tasks make OpenAI API requests:
 
 * `it`: Makes a new API request and runs `vimdiff` on the resulting revisions and the original
-  source. Defaults to the request settings file `warm-example.toml`.
+  source if there are changes. Defaults to the request settings file `warm-example.toml`.
 
 * `stomp`: Overwrites the source file with the revision of a new API request.
   Defaults to the request settings file `cold-example.toml`.
 
-* `proof`: If there is no previously saved single revision, a proofreading
-  request is made. Defaults to the request settings file `proof-example.toml`.
+* `proof`: Makes an API request for proofreading.
+  Defaults to the request settings file `proof-example.toml`.
 
 The following tasks do not make a new API request but operate on saved revisions
 from previous API requests:
@@ -34,10 +38,17 @@ from previous API requests:
 
 * `replace`: Overwrites the source file with the saved revision of a prior API request.
 
-* `freeze`: Overwrites the saved revision with a single copy of the source file.
-  This is useful when proofreading multiple source files and deciding that a source file
-  no longer needs corrections.
+<!-- copybreak on -->
 
+## File Formats
+
+Each entry in the `formats` table defines the formatting of copybreaks for a file
+format with given file extensions. The initial configuration will configure a format
+for Markdown and LaTeX formats. Any files with the file extensions of a configured
+format will be parsed for copybreak lines.
+See the [copybreaks page](copybreaks.md) for more details.
+
+<!-- copybreak off -->
 
 ## Tasks
 
@@ -67,18 +78,6 @@ The `[commands]` section defines the shell command line to execute. The bash exp
 * `"$1"` expands to the first saved revision returned by the latest API request.
 
 * `"$@"` expands to all saved revisions returned by the latest API request.
-
-### Diffadapt
-
-One of the shell commands executes the utility `diffadapt`, which is installed with `copyaid`.
-The `diffadapt` utility performs two tasks:
-
-* it inserts newline characters into the revision files for better line-by-line diffs with the source file, and
-* it checks whether the contents of a revision file consist solely of a codeword (specified by the `-c` option).
-
-If a revision file consists solely of a codeword, it will be replaced entirely
-with the source file. This is useful for requests that instruct the OpenAI API to
-return only the codeword when there are no text changes.
 
 
 ## OpenAI API Key
