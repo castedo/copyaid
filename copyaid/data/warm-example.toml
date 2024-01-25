@@ -9,6 +9,6 @@ Only output the revised text.
 max_tokens_ratio = 1.5
 
 [openai]
-n = 2
-temperature = 0.1
 model = 'gpt-4-1106-preview'
+temperature = 0.1
+n = 2
