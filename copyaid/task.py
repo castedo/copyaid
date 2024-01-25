@@ -1,5 +1,5 @@
 import tomli
-from .util import resolve_path
+from .util import resolve_path, read_file_text
 from .core import (
     ApiProxy, CopybreakSyntax, CopyEditor, SimpleParser, SourceParserProtocol,
     TrivialParser, WorkFiles, warning
@@ -55,6 +55,7 @@ class PackageConfig:
         config_file = local_dir / PackageConfig.CONFIG_FILENAME
         with open(config_file, "rb") as file:
             data = tomli.load(file)
+        self._formats = data.get("formats", {})
         self._commands = data.get("commands", {})
 
     def _react_as_commands(self, react: Any) -> list[str]:
@@ -79,22 +80,14 @@ class Config(PackageConfig):
     def __init__(self, tmp_dir: Path, config_file: Path):
         super().__init__(tmp_dir)
         with open(config_file, "rb") as file:
-            self._data = tomli.load(file)
-        self._commands.update(self._data.get("commands", {}))
+            data = tomli.load(file)
+            self._data = data
+        self._formats.update(data.get("formats", {}))
+        self._commands.update(data.get("commands", {}))
         self.path = config_file
-
-    def get_api_key(self) -> str | None:
-        api_key = None
-        api_key_path = self._data.get("openai_api_key_file")
-        api_key_path = resolve_path(self.path.parent, api_key_path)
-        if api_key_path is not None:
-            with open(api_key_path, 'r') as file:
-                api_key = file.read().strip()
-        return api_key
-
-    @property
-    def log_format(self) -> Optional[str]:
-        return self._data.get("log_format")
+        key_path = data.get("openai_api_key_file")
+        self.api_key = read_file_text(resolve_path(config_file.parent, key_path))
+        self.log_format = data.get("log_format")
 
     @property
     def task_names(self) -> Iterable[str]:
@@ -104,8 +97,7 @@ class Config(PackageConfig):
 
     def _get_parsers(self) -> list[SourceParserProtocol]:
         ret = list()
-        formats = self._data.get("formats", {})
-        for fname, f in formats.items():
+        for fname, f in self._formats.items():
             if "copybreak" not in f:
                 raise SyntaxError(f"Format '{fname}' table missing 'copybreak' key")
             ret.append(SimpleParser.from_POD(f))
@@ -119,7 +111,7 @@ class Config(PackageConfig):
             raise ValueError(f"Invalid task name {task_name}.")
         if "clean" in task:
             warning("Configuration setting 'clean' has been deprecated.")
-        api = ApiProxy(self.get_api_key(), log_path, self.log_format)
+        api = ApiProxy(self.api_key, log_path, self.log_format)
         ed = CopyEditor(api)
         ed.parsers = self._get_parsers()
         ed.add_off_instruction("off")

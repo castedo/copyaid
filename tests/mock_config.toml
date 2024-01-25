@@ -2,16 +2,11 @@
 request = "../copyaid/config/cold-example.toml"
 react = ["echo", "new-act"]
 
-[formats.markdown]
-extensions = [".md"]
+[formats.foobar]
+extensions = [".foobar"]
 copybreak.keywords = ["copybreak", "cbr"]
-copybreak.prefix = "<!--"
-copybreak.suffix = "-->"
-
-[formats.tex]
-extensions = [".tex"]
-copybreak.keywords = ["copybreak", "cbr"]
-copybreak.prefix = "%%"
+copybreak.prefix = "¡¿"
+copybreak.suffix = "?!"
 
 [commands]
 new-act = 'true'

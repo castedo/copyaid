@@ -32,3 +32,11 @@ def resolve_path(ref_dir: Path, path: Any) -> Path | None:
         if not ret.is_absolute():
             ret = ref_dir / ret
     return ret
+
+
+def read_file_text(file_path: Path | None) -> str | None:
+    ret = None
+    if file_path is not None:
+        with open(file_path, 'r') as file:
+            ret = file.read().strip()
+    return ret

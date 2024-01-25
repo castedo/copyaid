@@ -68,3 +68,15 @@ def test_copybreak_off_tex(tmp_path):
     src_text = SOURCE_TEXT + copybreak + SOURCE_TEXT
     got = get_revision(tmp_path / "source.tex", src_text)
     assert got == EXPECTED_TEXT + copybreak + SOURCE_TEXT
+
+def test_copybreak_foobar(tmp_path):
+    copybreak = "¡¿ copybreak ?!\n"
+    src_text = SOURCE_TEXT + copybreak + SOURCE_TEXT
+    got = get_revision(tmp_path / "source.foobar", src_text)
+    assert got == EXPECTED_TEXT + copybreak + EXPECTED_TEXT
+
+def test_copybreak_off_foobar(tmp_path):
+    copybreak = "¡¿ copybreak off ?!\n"
+    src_text = SOURCE_TEXT + copybreak + SOURCE_TEXT
+    got = get_revision(tmp_path / "source.foobar", src_text)
+    assert got == EXPECTED_TEXT + copybreak + SOURCE_TEXT
