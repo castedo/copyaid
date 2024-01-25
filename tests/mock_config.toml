@@ -1,7 +1,6 @@
-openai_api_key_file = "mock_api_key.txt"
-
 [tasks.proof]
-request = "../copyaid/data/cold-example.toml"
+request = "../copyaid/config/cold-example.toml"
+react = ["echo", "new-act"]
 
 [formats.markdown]
 extensions = [".md"]
@@ -13,3 +12,6 @@ copybreak.suffix = "-->"
 extensions = [".tex"]
 copybreak.keywords = ["copybreak", "cbr"]
 copybreak.prefix = "%%"
+
+[commands]
+new-act = 'true'

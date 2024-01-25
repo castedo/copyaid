@@ -73,11 +73,12 @@ def main(cmd_line_args: list[str] | None = None) -> int:
     prep = ConfigArgPreparse(cmd_line_args)
     if not prep.config_path.exists():
         return prep.handle_missing_config()
-    config = Config(prep.config_path)
+    tmp_dir = Path(get_std_path(*COPYAID_TMP_DIR))
+    config = Config(tmp_dir / "package", prep.config_path)
     parser = postconfig_argparser(config)
     args = parser.parse_args(cmd_line_args)
     if args.dest is None:
-        args.dest = Path(get_std_path(*COPYAID_TMP_DIR))
+        args.dest = tmp_dir
     exit_code = check_filename_collision(args.source)
     if exit_code != 0:
         return exit_code
@@ -90,7 +91,7 @@ def main(cmd_line_args: list[str] | None = None) -> int:
         work = WorkFiles(src, str(args.dest) + "/R{}/" + src.name, MAX_NUM_REVS)
         exit_code |= do_work(task, work)
         if exit_code > 1:
-                break
+            break
     return exit_code
 
 

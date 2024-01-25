@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any, Optional, TextIO
 from typing_extensions import Protocol
 
-
 LOGGER = logging.getLogger('copyaid')
 warning = LOGGER.warning
 
@@ -277,7 +276,7 @@ class CopyEditor:
     def _num_revisions(self, src: ParsedSource) -> int:
         ret = 1
         if init_instr := self._instructions.get(""):
-            ret = init_instr.num_revisions 
+            ret = init_instr.num_revisions
         for iid in src.instructions():
             if iid not in self._instructions:
                 raise SyntaxError(f"'{iid}' is not a configured copybreak instruction.")
@@ -285,10 +284,10 @@ class CopyEditor:
                 assert instr.num_revisions > 0
                 if ret == 1:
                     if instr.num_revisions > ret:
-                        ret = instr.num_revisions 
+                        ret = instr.num_revisions
                 elif instr.num_revisions > 1:
                     if instr.num_revisions < ret:
-                        ret = instr.num_revisions 
+                        ret = instr.num_revisions
                         warning(f"Instruction {iid} sets number of revisions to {ret}.")
                     elif instr.num_revisions > ret:
                         msg = "Only {} of {} revisions used with instruction {}."

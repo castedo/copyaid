@@ -1,11 +1,13 @@
 import tomli
+from .util import resolve_path
 from .core import (
     ApiProxy, CopybreakSyntax, CopyEditor, SimpleParser, SourceParserProtocol,
     TrivialParser, WorkFiles, warning
 )
 
 # Python Standard Library
-import io, os, subprocess
+import io, os, shutil, subprocess
+from importlib import resources
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
@@ -37,27 +39,54 @@ class Task:
         return ret
 
 
-class Config:
+class PackageConfig:
+    """
+    Class for handling base configuration from package.
+    """
+
+    CONFIG_FILENAME = "copyaid.toml"
+
+    def __init__(self, local_dir: Path):
+        os.makedirs(local_dir, exist_ok=True)
+        quasidir = resources.files(__package__).joinpath("config")
+        for quasipath in quasidir.iterdir():
+            with resources.as_file(quasipath) as filepath:
+                shutil.copy(filepath, local_dir)
+        config_file = local_dir / PackageConfig.CONFIG_FILENAME
+        with open(config_file, "rb") as file:
+            data = tomli.load(file)
+        self._commands = data.get("commands", {})
+
+    def _react_as_commands(self, react: Any) -> list[str]:
+        ret = list()
+        if react is None:
+            react = []
+        elif isinstance(react, str):
+            react = [react]
+        for r in react:
+            cmd = self._commands.get(r)
+            if cmd is None:
+                msg = f"Command '{r}' not found in configuration"
+                raise SyntaxError(msg)
+            ret.append(cmd)
+        return ret
+
+
+class Config(PackageConfig):
     """
     Class for handling user config files (usually `copyaid.toml`).
     """
-    def __init__(self, config_file: Path):
+    def __init__(self, tmp_dir: Path, config_file: Path):
+        super().__init__(tmp_dir)
         with open(config_file, "rb") as file:
             self._data = tomli.load(file)
+        self._commands.update(self._data.get("commands", {}))
         self.path = config_file
-
-    def _resolve_path(self, s: Any) -> Optional[Path]:
-        ret = None
-        if s is not None:
-            ret = Path(str(s)).expanduser()
-            if not ret.is_absolute():
-                ret = self.path.parent / ret
-        return ret
 
     def get_api_key(self) -> str | None:
         api_key = None
         api_key_path = self._data.get("openai_api_key_file")
-        api_key_path = self._resolve_path(api_key_path)
+        api_key_path = resolve_path(self.path.parent, api_key_path)
         if api_key_path is not None:
             with open(api_key_path, 'r') as file:
                 api_key = file.read().strip()
@@ -72,20 +101,6 @@ class Config:
         tasks = self._data.get("tasks", {})
         assert isinstance(tasks, dict)
         return tasks.keys()
-
-    def _react_as_commands(self, react: Any) -> list[str]:
-        ret = list()
-        if react is None:
-            react = []
-        elif isinstance(react, str):
-            react = [react]
-        for r in react:
-            cmd = self._data.get("commands", {}).get(r)
-            if cmd is None:
-                msg = f"Command '{r}' not found in {self.path}"
-                raise SyntaxError(msg)
-            ret.append(cmd)
-        return ret
 
     def _get_parsers(self) -> list[SourceParserProtocol]:
         ret = list()
@@ -108,7 +123,7 @@ class Config:
         ed = CopyEditor(api)
         ed.parsers = self._get_parsers()
         ed.add_off_instruction("off")
-        path = self._resolve_path(task.get("request"))
+        path = resolve_path(self.path.parent, task.get("request"))
         if path:
             ed.set_instruction("on", path)
             ed.set_init_instruction("on")
@@ -123,7 +138,7 @@ class Config:
             buf.write(name)
             buf.write("\n")
             task = self._data["tasks"][name]
-            path = self._resolve_path(task.get("request"))
+            path = resolve_path(self.path.parent, task.get("request"))
             if path:
                 buf.write("    Request: ")
                 buf.write(str(path))

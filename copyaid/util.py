@@ -2,6 +2,7 @@
 import os, shutil
 from importlib import resources
 from pathlib import Path
+from typing import Any
 
 STD_BASE_DIRS = dict(
     TMPDIR="/tmp",
@@ -22,3 +23,12 @@ def copy_package_file(filename: str, dest: Path) -> None:
     with resources.as_file(rp) as filepath:
         os.makedirs(dest.parent, exist_ok=True)
         shutil.copy(filepath, dest)
+
+
+def resolve_path(ref_dir: Path, path: Any) -> Path | None:
+    ret = None
+    if path is not None:
+        ret = Path(str(path)).expanduser()
+        if not ret.is_absolute():
+            ret = ref_dir / ret
+    return ret
