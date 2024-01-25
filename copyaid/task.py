@@ -57,6 +57,25 @@ class PackageConfig:
             data = tomli.load(file)
         self._formats = data.get("formats", {})
         self._commands = data.get("commands", {})
+        self._tasks: dict[str, Any] = dict()
+        self._add_task_data(local_dir, data.get("tasks", {}))
+
+    def _add_task_data(self, config_dir: Path, tasks: dict[str, Any]) -> None:
+        for key, task in tasks.items():
+            self._tasks[key] = dict(
+                request=resolve_path(config_dir, task.get("request")),
+                react=task.get("react"),
+            )
+
+    def _get_parsers(self) -> list[SourceParserProtocol]:
+        ret = list()
+        for fname, f in self._formats.items():
+            if "copybreak" not in f:
+                raise SyntaxError(f"Format '{fname}' table missing 'copybreak' key")
+            ret.append(SimpleParser.from_POD(f))
+        if not ret:
+            warning("No file formats specified in config file.")
+        return ret + [TrivialParser()]
 
     def _react_as_commands(self, react: Any) -> list[str]:
         ret = list()
@@ -79,34 +98,24 @@ class Config(PackageConfig):
     """
     def __init__(self, tmp_dir: Path, config_file: Path):
         super().__init__(tmp_dir)
-        with open(config_file, "rb") as file:
-            data = tomli.load(file)
-            self._data = data
+        if config_file.exists():
+            with open(config_file, "rb") as file:
+                data = tomli.load(file)
+        else:
+            data = {}
         self._formats.update(data.get("formats", {}))
         self._commands.update(data.get("commands", {}))
-        self.path = config_file
+        self._add_task_data(config_file.parent, data.get("tasks", {}))
         key_path = data.get("openai_api_key_file")
         self.api_key = read_file_text(resolve_path(config_file.parent, key_path))
         self.log_format = data.get("log_format")
 
     @property
     def task_names(self) -> Iterable[str]:
-        tasks = self._data.get("tasks", {})
-        assert isinstance(tasks, dict)
-        return tasks.keys()
-
-    def _get_parsers(self) -> list[SourceParserProtocol]:
-        ret = list()
-        for fname, f in self._formats.items():
-            if "copybreak" not in f:
-                raise SyntaxError(f"Format '{fname}' table missing 'copybreak' key")
-            ret.append(SimpleParser.from_POD(f))
-        if not ret:
-            warning("No file formats specified in config file.")
-        return ret + [TrivialParser()]
+        return self._tasks.keys()
 
     def get_task(self, task_name: str, log_path: Path) -> Task:
-        task = self._data.get("tasks", {}).get(task_name)
+        task = self._tasks.get(task_name)
         if task is None:
             raise ValueError(f"Invalid task name {task_name}.")
         if "clean" in task:
@@ -115,8 +124,7 @@ class Config(PackageConfig):
         ed = CopyEditor(api)
         ed.parsers = self._get_parsers()
         ed.add_off_instruction("off")
-        path = resolve_path(self.path.parent, task.get("request"))
-        if path:
+        if path := task.get("request"):
             ed.set_instruction("on", path)
             ed.set_init_instruction("on")
         cmds = self._react_as_commands(task.get("react"))
@@ -129,15 +137,14 @@ class Config(PackageConfig):
             buf.write("  ")
             buf.write(name)
             buf.write("\n")
-            task = self._data["tasks"][name]
-            path = resolve_path(self.path.parent, task.get("request"))
-            if path:
+            task = self._tasks[name]
+            if path := task.get("request"):
                 buf.write("    Request: ")
                 buf.write(str(path))
                 buf.write("\n")
             react = self._react_as_commands(task.get("react"))
             if react:
-                buf.write("    React command chain:\n")
+                buf.write("    React commands:\n")
                 for r in react:
                     buf.write("      ")
                     buf.write(help_example_react(r))

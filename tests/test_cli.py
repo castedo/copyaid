@@ -28,10 +28,10 @@ class MockApi:
 copyaid.core.ApiProxy.ApiClass = MockApi
 
 
-def get_revision(src_path, src_text):
+def get_revision(src_path, src_text, task="proof"):
     open(src_path, "w").write(src_text)
     retcode = copyaid.cli.main([
-        "proof",
+        task,
         str(src_path),
         "--dest", str(src_path.parent),
         "--config", "tests/mock_config.toml",
@@ -72,11 +72,11 @@ def test_copybreak_off_tex(tmp_path):
 def test_copybreak_foobar(tmp_path):
     copybreak = "¡¿ copybreak ?!\n"
     src_text = SOURCE_TEXT + copybreak + SOURCE_TEXT
-    got = get_revision(tmp_path / "source.foobar", src_text)
+    got = get_revision(tmp_path / "source.foobar", src_text, "fooit")
     assert got == EXPECTED_TEXT + copybreak + EXPECTED_TEXT
 
 def test_copybreak_off_foobar(tmp_path):
     copybreak = "¡¿ copybreak off ?!\n"
     src_text = SOURCE_TEXT + copybreak + SOURCE_TEXT
-    got = get_revision(tmp_path / "source.foobar", src_text)
+    got = get_revision(tmp_path / "source.foobar", src_text, "fooit")
     assert got == EXPECTED_TEXT + copybreak + SOURCE_TEXT

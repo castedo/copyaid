@@ -1,4 +1,4 @@
-[tasks.proof]
+[tasks.fooit]
 request = "../copyaid/config/cold-example.toml"
 react = ["echo", "new-act"]
 
@@ -10,3 +10,4 @@ copybreak.suffix = "?!"
 
 [commands]
 new-act = 'true'
+edit-if-diff = 'diff -qs "$0" "$@" || true'

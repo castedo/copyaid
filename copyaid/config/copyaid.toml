@@ -39,11 +39,11 @@ react = ["cp-rev-over-src"]
 
 [tasks.it]
 request = "warm-example.toml"
-react = ["vim-if-diff"]
+react = ["edit-if-diff"]
 
 [tasks.proof]
 request = "proof-example.toml"
-react = ["vim-if-diff"]
+react = ["edit-if-diff"]
 
 
 # Named (Bash) shell commands lines to be run on saved revisions from requests.
@@ -54,7 +54,7 @@ react = ["vim-if-diff"]
 [commands]
 diff = 'diff -s "$0" "$@"'
 vimdiff = 'vimdiff "$0" "$@"'
-vim-if-diff = 'diff -qs "$0" "$@" || vimdiff "$0" "$@"'
+edit-if-diff = 'diff -qs "$0" "$@" || vimdiff "$0" "$@"'
 echo = 'echo "$@"'
 rm = 'rm "$@"'
 cp-rev-over-src = 'cp "$1" "$0"'
