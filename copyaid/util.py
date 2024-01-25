@@ -18,11 +18,12 @@ def get_std_path(env_var_name: str, subpath: str) -> Path:
     return Path(base_dir).expanduser() / subpath
 
 
-def copy_package_file(filename: str, dest: Path) -> None:
-    rp = resources.files(__package__).joinpath("data").joinpath(filename)
-    with resources.as_file(rp) as filepath:
-        os.makedirs(dest.parent, exist_ok=True)
-        shutil.copy(filepath, dest)
+def copy_package_dir(package_path: str, dest_dir: Path) -> None:
+    os.makedirs(dest_dir, exist_ok=True)
+    quasidir = resources.files(__package__).joinpath(package_path)
+    for quasipath in quasidir.iterdir():
+        with resources.as_file(quasipath) as filepath:
+            shutil.copy(filepath, dest_dir)
 
 
 def resolve_path(ref_dir: Path, path: Any) -> Path | None:

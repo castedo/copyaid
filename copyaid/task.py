@@ -1,13 +1,12 @@
 import tomli
-from .util import resolve_path, read_file_text
+from .util import copy_package_dir, read_file_text, resolve_path
 from .core import (
     ApiProxy, CopybreakSyntax, CopyEditor, SimpleParser, SourceParserProtocol,
     TrivialParser, WorkFiles, warning
 )
 
 # Python Standard Library
-import io, os, shutil, subprocess
-from importlib import resources
+import io, subprocess
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
@@ -47,11 +46,7 @@ class PackageConfig:
     CONFIG_FILENAME = "copyaid.toml"
 
     def __init__(self, local_dir: Path):
-        os.makedirs(local_dir, exist_ok=True)
-        quasidir = resources.files(__package__).joinpath("config")
-        for quasipath in quasidir.iterdir():
-            with resources.as_file(quasipath) as filepath:
-                shutil.copy(filepath, local_dir)
+        copy_package_dir("config", local_dir)
         config_file = local_dir / PackageConfig.CONFIG_FILENAME
         with open(config_file, "rb") as file:
             data = tomli.load(file)

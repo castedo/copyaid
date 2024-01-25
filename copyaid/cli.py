@@ -1,6 +1,6 @@
 from .core import WorkFiles
 from .task import Config, Task
-from .util import get_std_path, copy_package_file
+from .util import get_std_path
 
 # Python standard libraries
 import argparse, logging
@@ -15,31 +15,17 @@ COPYAID_LOG_DIR = ("XDG_STATE_HOME", "copyaid/log")
 MAX_NUM_REVS = 7
 
 
-class ConfigArgPreparse:
-    def __init__(self, cmd_line_args: list[str] | None):
-        preparser = argparse.ArgumentParser(add_help=False)
-        preparser.add_argument("-c", "--config", type=Path)
-        (args, rest) = preparser.parse_known_args(cmd_line_args)
-        self.config_arg = args.config
-        self.config_path = args.config or Path(get_std_path(*COPYAID_CONFIG_FILE))
-        if self.config_path.is_dir():
-            self.config_path = self.config_path / COPYAID_CONFIG_FILENAME
-        self.init = (rest == ["init"])
-
-    def handle_missing_config(self) -> int:
-        if self.init:
-            copy_package_file(COPYAID_CONFIG_FILENAME, self.config_path)
-            copy_package_file("cold-example.toml", self.config_path.parent)
-            copy_package_file("warm-example.toml", self.config_path.parent)
-            copy_package_file("proof-example.toml", self.config_path.parent)
-            return 0
-        else:
-            print(f"Config file '{self.config_path}' not found, run:", file=stderr)
-            if self.config_arg is None:
-                print(f"  {PROGNAME} init", file=stderr)
-            else:
-                print(f"  {PROGNAME} --config '{self.config_arg}' init", file=stderr)
-            return 2
+def get_config_path(cmd_line_args: list[str] | None) -> Path | None:
+    preparser = argparse.ArgumentParser(add_help=False)
+    preparser.add_argument("-c", "--config", type=Path)
+    (args, rest) = preparser.parse_known_args(cmd_line_args)
+    if args.config and not args.config.exists():
+        print(f"Config file '{args.config}' not found.", file=stderr)
+        return None
+    ret = args.config or Path(get_std_path(*COPYAID_CONFIG_FILE))
+    if ret.is_dir():
+        ret = ret / COPYAID_CONFIG_FILENAME
+    return ret
 
 
 def postconfig_argparser(config: Config) -> argparse.ArgumentParser:
@@ -70,11 +56,11 @@ def postconfig_argparser(config: Config) -> argparse.ArgumentParser:
 
 def main(cmd_line_args: list[str] | None = None) -> int:
     logging.basicConfig()
-    prep = ConfigArgPreparse(cmd_line_args)
-    if not prep.config_path.exists():
-        return prep.handle_missing_config()
     tmp_dir = Path(get_std_path(*COPYAID_TMP_DIR))
-    config = Config(tmp_dir / "package", prep.config_path)
+    config_path = get_config_path(cmd_line_args)
+    if not config_path:
+        return 2
+    config = Config(tmp_dir / "package", config_path)
     parser = postconfig_argparser(config)
     args = parser.parse_args(cmd_line_args)
     if args.dest is None:
