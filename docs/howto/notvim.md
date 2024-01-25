@@ -37,4 +37,4 @@ The definition of this command is in the `[commands]` section.
 You can also add your own new task by copying and modifying the `[tasks.it]` section and
 giving it a new name, such as `[tasks.revise]`.
 
-For more details, see the [configuration page](../config.md).
+For more details, see the [reference](../reference.md).

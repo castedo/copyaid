@@ -25,12 +25,11 @@ nav:
   - Get Started: start.md
   - Copybreaks: copybreaks.md
   - Hot Copyediting: hot.md
-  - Reference:
-    - Configuration: config.md
-    - Request Settings: requests.md
+  - Reference: reference.md
   - How-To Guides:
     - Opt Out of Vimdiff: howto/notvim.md
   - Costs: costs.md
+  - Changes: changes.md
   - About: about.md
 extra:
   analytics:

@@ -84,7 +84,7 @@ The `it` task defaults to a "warm" copyedit. You might prefer adjusting the requ
 temperature to a cold zero or a hotter temperature.
 To learn about the differences, read the [Hot Copyediting page](hot.md).
 
-To customize your tasks, refer to the [configuration page](config.md).
+To customize your tasks, refer to the [reference page](reference.md).
 
 !!! Warning
     Be sure to use [copybreaks](copybreaks.md) and/or ensure that your document consists
