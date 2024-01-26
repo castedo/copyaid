@@ -34,15 +34,19 @@ clean = { react = "rm" }
 replace = { react = "cp-rev-over-src" }
 
 [tasks.stomp]
-request = "cold-example.toml"
+request = "copyedit.toml"
 react = ["cp-rev-over-src"]
 
 [tasks.it]
-request = "warm-example.toml"
+request = "copyedit.toml"
 react = ["edit-if-diff"]
 
 [tasks.proof]
-request = "proof-example.toml"
+request = "proofread.toml"
+react = ["edit-if-diff"]
+
+[tasks.storm]
+request = "copystorm.toml"
 react = ["edit-if-diff"]
 
 

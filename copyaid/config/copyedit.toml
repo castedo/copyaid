@@ -1,6 +1,6 @@
 chat_system = """\
 You will be provided text with Markdown and HTML from a document. \
-Improve the provided text \
+Copyedit the provided text \
 using standard American English. \
 Preserve all Markdown and HTML. \
 Only output the revised text.
@@ -10,5 +10,5 @@ max_tokens_ratio = 1.5
 
 [openai]
 model = 'gpt-4-1106-preview'
-temperature = 0.1
-n = 2
+temperature = 0
+n = 1
