@@ -1,16 +1,15 @@
-<!-- copybreak off -- draft -->
+<!-- copybreak off -->
 
 # Copybreaks
 
-For faster and higher quality revisions, you need to break your document into manageable
-chunks, either by saving the document as multiple files or using _copybreak lines_.
-This is **very important** for LaTeX files.
-It is best to use copybreak lines to isolate the paragraphs and sections of text from
-the boilerplate scoping LaTeX and the beginning and end of a LaTeX document.
-Copybreak lines break up your document into passages that can be independently revised.
-The syntax for copybreak lines is configured in the `copyaid.toml` file.
-The initial installation (via `copyaid init`) will configure the following syntaxes for
-the following two file formats.
+For faster and higher-quality revisions, you need to break your document into manageable
+chunks. This can be achieved either by saving the document as multiple files or by using _copybreak lines_.
+This approach is **very important** for LaTeX files.
+It's advisable to use copybreak lines to isolate paragraphs and sections of text from
+the boilerplate scoping in LaTeX, as well as the beginning and end of a LaTeX document.
+Copybreak lines divide your document into passages that are sent independently to
+OpenAI.
+The default syntax for copybreak lines in Markdown and LaTeX follows.
 
 <!-- copybreak off -->
 
@@ -49,7 +48,7 @@ handled like the passage before it, but independently.
 
 <!-- copybreak on -->
 
-## Passage Length between Copybreaks
+## Passage Length Between Copybreaks
 
 Long passages between copybreaks tend to result in fewer edits made per line.
 Conversely, short passages often lead to more edits per line.

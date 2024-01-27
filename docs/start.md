@@ -5,27 +5,20 @@
 
 ## Setup Steps
 
-### 1) Install Python Package
+### 1) Install the Python Package
 
 ```bash
 python3 -m pip install copyaid
 ```
 
-### 2) Install the Default Configuration File
-
-```bash
-copyaid init
-```
-
-On most Linux distributions and macOS, your configuration file will be installed at
-`~/.config/copyaid/copyaid.toml`.
-
-### 3) Sign Up for the OpenAI API
+### 2) Sign Up for the OpenAI API
 
 If you do not already have an OpenAI account,
 sign up at [platform.openai.com/signup](https://platform.openai.com/signup).
 
-### 4) Set Up Your OpenAI API Key
+<!-- copybreak off -->
+
+### 3) Set Up Your OpenAI API Key
 
 To create an API key, visit
 [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
@@ -34,15 +27,15 @@ OpenAI recommends exporting your API key as an environment variable named
 `OPENAI_API_KEY`. For instructions, see the
 [OpenAI documentation](https://platform.openai.com/docs/quickstart/step-2-setup-your-api-key).
 
-Alternatively, you can reference your OpenAI API key
-in your `copyaid.toml` configuration file.
-To do this, save your OpenAI API key as the contents of the file
-`~/.config/copyaid/openai_api_key.txt` and then uncomment the line
-`# openai_api_key_file` in the configuration file from step 2.
+Alternatively, you can reference your OpenAI API key from a personalized `copyaid.toml`
+configuration file.
+To learn how, consult [the reference](reference.md).
 
-### 5) Quick Test
+<!-- copybreak off -->
 
-To ensure Copy**AI**d is installed correctly, run:
+### 4) Quick Test
+
+To ensure Copy**Ai**d is installed correctly, run:
 
 ```bash
 copyaid --help
@@ -67,25 +60,14 @@ cat test.md
 #   Software documentation is helpful.
 ```
 
-<!-- copybreak off -->
+<!-- copybreak on -->
 
 Conclusion
 ----------
 
-You're now ready to run Copy**AI**d on your own source text files.
-The `it` task defaults to using `vimdiff`.
-If you prefer not to use Vim,
-see [How To Opt Out of Using Vimdiff](howto/notvim.md).
-
-Be cautious with the `stomp` task as it overwrites the source file without showing the changes first.
-It's mainly for testing.
-
-The `it` task defaults to a "warm" copyedit. You might prefer adjusting the request
-temperature to a cold zero or a hotter temperature.
-To learn about the differences, read the [Hot Copyediting page](hot.md).
-
-To customize your tasks, refer to the [reference page](reference.md).
+You are now ready to perform copyediting [tasks](tasks.md) on your own source text files.
+Read the [Tasks page](tasks.md) to learn how.
 
 !!! Warning
-    Be sure to use [copybreaks](copybreaks.md) and/or ensure that your document consists
+    Make sure to use [copybreaks](copybreaks.md) and/or ensure that your document consists
     of small text source files.

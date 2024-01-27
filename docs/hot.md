@@ -1,16 +1,21 @@
+<!-- cbr off -->
+
 Hot Copyediting
 ===============
 
-After running `copyaid init` following a new installation,
-the `stomp` and `it` tasks are configured to use the example request settings files
-`cold-example.toml` and `warm-example.toml`, respectively.
-On most Linux distributions, these files are located in `~/.config/copyaid/`.
+The default configurations of the `stomp` and `light` tasks are set to make "cold"
+requests.
+In contrast, the `heavy` task is configured by default to make "hot" requests.
 
+<!-- cbr off -->
 
 Cold Requests
 -------------
 
-A "cold" request is defined by the following settings:
+A "cold" request refers to the type of request one might naturally expect a computer to handle.
+The response is (usually) consistent,
+exhibiting (mostly) deterministic behavior.
+Such a request will have the following settings:
 
 ```
 [openai]
@@ -30,14 +35,22 @@ Here is a description for `temperature` from the
 > while lower values like 0.2 will make it more focused and deterministic.
 
 
+<!-- cbr off -->
+
 Hot Requests
 ------------
 
 Conversely, hot requests have a `temperature` setting above zero,
 indicating that OpenAI will generate output from a range of possible choices.
-Setting `n = 2` instructs OpenAI to return two revisions, and Copy**AI**d will save
-and display both revisions alongside the original text.
-For instance, a Copy**AI**d task using `vimdiff` will present a 3-way comparison.
+
+```
+[openai]
+n = 2
+temperature = 0.4
+```
+
+Setting `n = 2` instructs OpenAI to return two revisions, and Copy**Ai**d will save
+and can present a 3-way comparison between both revisions alongside the original text.
 
 If no `seed` setting is specified,
 the choices will be selected randomly.
@@ -48,16 +61,6 @@ Using settings like these
 allows you to evaluate whether to integrate a revision,
 particularly if OpenAI suggests the same revision in both randomly generated outputs.
 
-```
-[openai]
-n = 2
-temperature = 0.1
-```
-
-A higher temperature, such as `0.5`,
+A higher temperature, such as `0.8`,
 can be useful for exploring significantly different rewordings
 of text and new ideas for substantial revisions.
-You can achieve similar effects by modifying
-the wording of the prompt; for example,
-by changing "revise" to "rewrite" in `chat_system` prompt of a request settings file.
-

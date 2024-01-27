@@ -23,11 +23,13 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Get Started: start.md
+  - Tasks: tasks.md
   - Copybreaks: copybreaks.md
   - Hot Copyediting: hot.md
   - Reference: reference.md
   - How-To Guides:
     - Opt Out of Vimdiff: howto/notvim.md
+    - Adjust Requests: howto/adjust_request.md
   - Costs: costs.md
   - Changes: changes.md
   - About: about.md

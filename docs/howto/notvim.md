@@ -1,40 +1,64 @@
+<!-- cbr on -->
+
 How to Opt Out of Using Vimdiff
 ===============================
 
-Copy**AI**d is set up to use `vimdiff` by default for viewing suggested revisions.
-If you prefer not to use Vim, you have two options:
+By default, many Copy**AI**d tasks will run `vimdiff` when AI requests result in
+revisions to source text files.
+This guide will explain how to configure Copy**AI**d to react differently.
 
-* Run default tasks that do not initiate `vimdiff`.
-* Customize your `copyaid.toml` configuration file to specify a different program.
+Objective
+---------
 
-Default Tasks
--------------
-
-The default tasks that do not use `vimdiff` include:
-
-* `stomp`: Overwrites the source file with the revised content from a new API request.
-
-* `diff`: Executes `diff` on saved revisions.
-
-* `where`: Prints the file location(s) of the saved revision(s).
-
-* `replace`: Overwrites the source file with the stored revision from a previous API request.
+To have a personalized user configuration file so that Copy**AI**d tasks will
+not run `vimdiff`.
 
 
-Customize Tasks
----------------
+Steps
+-----
 
-You can customize the `copyaid.toml` configuration file to change the
-`it` task to execute an alternative program instead of `vimdiff`.
-On most Linux distributions, you can find `copyaid.toml` in the `~/.config/copyaid/`
-directory.
+### 1) Determine Config File Locations
 
-Within `copyaid.toml`, the `it` task is defined in the `[tasks.it]` section.
-The `react` value specifies the sequence of commands to run after completing the request.
-The last command in the `react` sequence is `vim-if-diff`.
-The definition of this command is in the `[commands]` section.
+Determine the file locations of the default configuration and your personal
+configuration by using the `--help` option.
 
-You can also add your own new task by copying and modifying the `[tasks.it]` section and
-giving it a new name, such as `[tasks.revise]`.
+```bash
+copyaid --help
+```
+
+You will see two lines of output similar to the following:
+```
+Default config: /tmp/copyaid/package/copyaid.toml
+User config: /home/wang/.config/copyaid/copyaid.toml
+```
+
+### 2) Copy Config Lines
+
+Copy the following two lines from the default config file to the user configuration file.
+If the user configuration file does not exist, create it.
+
+```
+[commands]
+edit-if-diff = 'diff -qs "$0" "$@" || vimdiff "$0" "$@"'
+```
+
+The internal command named `edit-if-diff` is referenced by many Copy**AI**d tasks as a
+reaction to revisions returned by AI requests.
+
+
+### 3) Modify User Config Lines
+
+In your user configuration file, modify the `edit-if-diff` command line
+by removing the last half so that it becomes:
+
+```
+[commands]
+edit-if-diff = 'diff -qs "$0" "$@"'
+```
+
+Alternatively, you may replace `vimdiff` with another application.
+The `"$0"` expression will expand to the source file location, and the
+`"$@"` expression will expand to include all revisions returned by an AI request
+(which could be more than one).
 
 For more details, see the [reference](../reference.md).

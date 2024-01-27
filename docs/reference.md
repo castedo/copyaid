@@ -1,4 +1,4 @@
-<!-- copybreak on -->
+<!-- copybreak off -->
 
 # Reference
 
@@ -7,29 +7,31 @@ For details on the command-line options, run `copyaid --help`.
 
 ## Configuration
 
-To view help for the current configuration, use the command `copyaid -h`.
+To view help for the current configuration, use the command `copyaid --help`.
 
 On POSIX systems, the default location for the configuration file is
 `~/.config/copyaid/copyaid.toml`.
 For detailed information on the TOML format, visit [toml.io](https://toml.io).
 
-<!-- copybreak off -- ok -->
+<!-- copybreak off -->
 
-### Initial Configuration
+### Default Configuration
 
-After running `copyaid init`, a heavily commented initial configuration file is created,
-along with three example [request settings files](#request-settings).
-Three default tasks make OpenAI API requests:
-
-* `it`: Sends a new API request and, if there are changes, runs `vimdiff`
-  to compare the resulting revisions with the original source.
-  It defaults to using the request settings file `warm-example.toml`.
-
-* `stomp`: Overwrites the source file with the revision of a new API request.
-  Defaults to the request settings file `cold-example.toml`.
+Four default tasks make OpenAI API requests:
 
 * `proof`: Makes an API request for proofreading.
-  Defaults to the request settings file `proof-example.toml`.
+  Defaults to the request settings file `proofread.toml`.
+
+* `light`: Makes an API request for light copyediting.
+  Defaults to the request settings file `light.toml`.
+
+* `heavy`: Makes an API request for heavy copyediting (think "copy-storming").
+  Defaults to the request settings file `heavy.toml`.
+
+* `stomp`: Overwrites the source file with the revision from a new API request.
+  Defaults to the request settings file `light.toml`.
+
+<!-- copybreak off -->
 
 The following tasks do not make a new API request but work with revisions
 saved from previous API requests:
@@ -108,11 +110,6 @@ If `jsoml` is chosen, you must install the `jsoml` Python package.
 
 Values in a request settings file correspond to values sent to the
 [OpenAI API endpoint for chat completion](https://platform.openai.com/docs/api-reference/chat/create).
-
-Upon running `copyaid init` for the first time, it creates `cold-example.toml`,
-`warm-example.toml`, and `proof-example.toml` request settings files,
-in addition to a `copyaid.toml` configuration file.
-On most Linux distributions, these files are located in `~/.config/copyaid/`.
 
 For detailed information on the TOML format, visit [toml.io](https://toml.io).
 

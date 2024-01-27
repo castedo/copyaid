@@ -8,7 +8,7 @@ The cost of using Copy**AI**d primarily depends on the following factors:
 * The GPT model specified in the request settings file, and
 * The proportion of your requests that return with no edits.
 
-The default request settings installed by `copyaid init` use the GPT-4 Turbo model `gpt-4-1106-preview`.
+The default request settings (as of version 0.7) use the GPT-4 Turbo model `gpt-4-0125-preview`.
 You can expect to spend approximately $0.02 to $0.04 per thousand words using GPT-4 Turbo.
 
 Alternatively, you may opt for the cheaper GPT-3 Turbo model,
