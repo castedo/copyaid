@@ -10,7 +10,10 @@ from typing import Any, Optional, TextIO
 from typing_extensions import Protocol
 
 LOGGER = logging.getLogger('copyaid')
+error = LOGGER.error
 warning = LOGGER.warning
+info = LOGGER.info
+debug = LOGGER.debug
 
 
 class LiveOpenAiApi:

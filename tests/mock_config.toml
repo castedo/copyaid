@@ -1,5 +1,5 @@
 [tasks.fooit]
-request = "../copyaid/config/cold-example.toml"
+request = "../copyaid/config/proofread.toml"
 react = ["echo", "new-act"]
 
 [formats.foobar]
