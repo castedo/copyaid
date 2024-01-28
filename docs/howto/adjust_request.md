@@ -3,11 +3,16 @@
 How to Adjust Request Settings
 ==============================
 
-Request settings files control the details of the instructions sent to OpenAI, along
-with the source text.
-These instructions can impact the English dialect used, the text formatting,
-and the OpenAI request temperature.
+Request settings files control the details of the instructions sent to OpenAI,
+along with the source text.
+These settings can impact the:
 
+* English dialect used,
+* handling of text formatting,
+* OpenAI request temperature, and
+* copyediting weight (how light or heavy).
+
+<!-- cbr off -->
 
 Steps
 -----
@@ -63,6 +68,9 @@ HTML` with `LaTeX`.
 
 Another setting you may want to adjust is the `temperature` setting in `foobar.toml`.
 For more information, see the explanation of [hot copyediting](../hot.md).
+
+Lastly, to reduce the weight of the default `heavy` request setting, replace `Improve`
+with `Revise` in the system prompt (`chat_system`).
 
 
 ### 5) Choose a New Task Name (Optional)

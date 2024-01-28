@@ -36,7 +36,8 @@ The default task settings offer three levels of copyediting weight:
     so much so that it will even revise text that has resulted from this
     request. "Copy-storming" might be an apt description for this level of
     copyediting weight.
-
+    To adjust the `heavy` request to be lighter, consult the guide on
+    [how to Adjust Request Settings](howto/adjust_request.md).
 
 Lastly, the `stomp` task is configured by default to use the same light weight as the
 `light` task but reacts to the revisions differently by overwriting the source text

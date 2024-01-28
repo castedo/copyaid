@@ -18,6 +18,9 @@ capable of frequent, rapid, and extremely inexpensive
 * Enables simultaneous file comparisons across multiple AI revisions.
 * Permits customization of programs to run automatically after AI revisions.
 * Allows customization of the copyediting instructions sent to OpenAI.
+* Includes systematically tested OpenAI prompts curated from [more than a hundred test
+  prompts and many thousands of OpenAI requests](https://gitlab.com/castedo/copyblast)
+   using [CopyBlaster](https://gitlab.com/castedo/copyblaster).
 
 
 <div class="action-band" markdown>
