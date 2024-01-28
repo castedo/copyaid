@@ -11,8 +11,7 @@ copyaid --help
 
 Different tasks trigger different requests to OpenAI for revisions of source text,
 or possibly no request at all.
-A fundamental consideration in choosing which task to execute is the _weight_ of the request
-configured for a task.
+A fundamental consideration in choosing which task to execute is the _weight_ of its request.
 
 <!-- cbr off -->
 

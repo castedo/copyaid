@@ -1,4 +1,4 @@
-<!-- copybreak off -->
+<!-- copybreak on -->
 
 # Reference
 
@@ -7,10 +7,9 @@ For details on the command-line options, run `copyaid --help`.
 
 ## Configuration
 
-To view help for the current configuration, use the command `copyaid --help`.
-
-On POSIX systems, the default location for the configuration file is
-`~/.config/copyaid/copyaid.toml`.
+To view the current configuration, use the command `copyaid --help`.
+Two lines of the help output list the two configuration file locations.
+CopyAid configuration files are in TOML format.
 For detailed information on the TOML format, visit [toml.io](https://toml.io).
 
 <!-- copybreak off -->
@@ -65,11 +64,6 @@ by an optional chain of *react* commands.
 
 The `request` value for each task specifies the request settings file to be used for
 OpenAI API requests. See the [request settings](#request-settings) section.
-
-The `clean` setting determines whether saved revisions are reused or
-replaced by a new request. If `clean = true`, a request will be made and
-any saved revisions will be replaced. Otherwise, a request will be skipped if
-a single revision is saved and its contents are identical to the source file.
 
 The `react` value is a list of commands to run on the original source and
 the saved results of an OpenAI API request. These saved results are
@@ -126,7 +120,7 @@ For detailed information on the TOML format, visit [toml.io](https://toml.io).
 `max_tokens_ratio`
 :   Modifying this setting is generally unnecessary. It is a ratio used to calculate
     the `max_tokens` parameter for the OpenAI API.
-    Copy**AI**d will estimate the number of tokens in the source file
+    Copy**Ai**d will estimate the number of tokens in the source file
     and multiply that estimate by `max_tokens_ratio` to determine the
     `max_tokens` value for the API request output.
 

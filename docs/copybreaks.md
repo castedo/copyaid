@@ -35,10 +35,10 @@ The default syntax for copybreak lines in Markdown and LaTeX follows.
 
 <!-- copybreak off -- draft -->
 
-As an alternative to the long keyword `copybreak`, the abbreviated keyword `cbr` is also initially
-configured.
+As an alternative to the long keyword `copybreak`, the abbreviated keyword `cbr` is also
+configured by default.
 
-Every `copybreak` line will cause the passages above and below the copybreak line to be
+Every `copybreak` line will cause the passages before and after the copybreak line to be
 processed independently. A `copybreak on` line will cause the passage that follows to
 be processed according to the request settings of the task being run.
 A `copybreak off` line will cause the passage that follows to not be sent to an AI API

@@ -1,14 +1,16 @@
-<!-- copybreak off -- ok -->
+<!-- copybreak on -- ok -->
 
 Change History
 ==============
 
-Version 0.7.1
--------------
+Version 0.7.1 (2024-Jan-27)
+---------------------------
 
 * Updated request setting files based on testing with the OpenAI January 2024 preview of
   GPT-4 Turbo.
 * Removed the `copy init` pseudo-task.
+* Renamed the 'it' task to 'light'.
+* Renamed default request settings files.
 * Configuration is now set first by the package config, followed by an optional user config file.
 * Renamed the configuration command `vim-if-diff` to `edit-if-diff`.
 
