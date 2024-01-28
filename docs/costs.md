@@ -1,3 +1,5 @@
+<!-- cbr off -->
+
 Costs of Using the OpenAI API
 =============================
 
@@ -17,11 +19,15 @@ However, copyediting with GPT-3 may result in lower quality,
 and changes in the request text can lead to surprising and unpredictable drops in response quality.
 The cost is around $0.005 per thousand words using GPT-3.
 
-As of late 2023, Copy**Ai**d sends the *entire* file.
-If you are using LaTeX,
-consider breaking large files into smaller files and using the `\input` macro.
-For Markdown files, different Markdown flavors have various methods for
-combining multiple smaller source files into a single output document.
+<!-- cbr off -->
+
+As of early 2024, Copy**Ai**d will send *entire* files
+in the absence of any [copybreak lines](copybreaks.md).
+To save money and achieve better copyediting performance,
+use [copybreak lines](copybreaks.md) and/or divide large files into smaller ones,
+such as by using the `\input` macro in LaTeX.
+
+<!-- cbr off -->
 
 For more details on API pricing, visit the [OpenAI Pricing page](https://openai.com/pricing).
 Note that Copy**Ai**d will incur the input cost of sending the source text
