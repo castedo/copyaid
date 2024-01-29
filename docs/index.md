@@ -22,14 +22,17 @@ capable of frequent, rapid, and extremely inexpensive
   prompts and many thousands of OpenAI requests](https://gitlab.com/castedo/copyblast)
    using [CopyBlaster](https://gitlab.com/castedo/copyblaster).
 
+<!-- copybreak off -->
 
 <div class="action-band" markdown>
 [Get Started](start.md){ .md-button .md-button--primary }
 </div>
 
 !!! alert
+    As of January 2024, gaining access to GPT-4 Turbo will require a payment of $1 or
+    more.
     As of November 2023, OpenAI offers $5 in free credit for your first 3 months.
-    This can cover copyediting for more than a hundred thousand words.
+    This can cover copyediting for approximately hundreds of thousands of words.
 
 <!-- copybreak off -->
 
