@@ -1,4 +1,4 @@
-site_name: CopyAId.it
+site_name: CopyAid.it
 site_url: https://copyaid.it/
 repo_name: gitlab<br>castedo/copyaid
 repo_url: https://gitlab.com/castedo/copyaid
@@ -30,6 +30,7 @@ nav:
   - How-To Guides:
     - Opt Out of Vimdiff: howto/notvim.md
     - Adjust Requests: howto/adjust_request.md
+    - Comply with Journals: howto/journals.md
   - Costs: costs.md
   - Changes: changes.md
   - About: about.md
