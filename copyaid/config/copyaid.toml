@@ -22,6 +22,11 @@ extensions = [".tex"]
 copybreak.keywords = ["copybreak", "cbr"]
 copybreak.prefix = "%%"
 
+[formats.restructuredtext]
+extensions = [".rst"]
+copybreak.keywords = ["copybreak", "cbr"]
+copybreak.prefix = ".. "
+
 
 # For each task:
 # 1) If request prompt setting file provided, then make OpenAI API request.
