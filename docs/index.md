@@ -1,9 +1,9 @@
-<!-- copybreak off -->
+<!-- copybreak on -->
 
 # Copy**Ai**d: Copyedit with AI from a CLI
 
 Copy**Ai**d is an open-source command-line interface (CLI) utility
-that copyedits text files using the OpenAI API for
+that proofreads and copyedits text files using the OpenAI API for
 [GPT](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer),
 a [Large Language Model](https://en.wikipedia.org/wiki/Large_language_model)
 capable of frequent, rapid, and extremely inexpensive
@@ -13,7 +13,7 @@ capable of frequent, rapid, and extremely inexpensive
 
 ## Features
 
-* Supports Markdown and LaTeX formats.
+* Supports Markdown, LaTeX, and reStructuredText formats.
 * Integrates with text file comparison tools such as `vimdiff` for reviewing and merging AI revisions.
 * Enables simultaneous file comparisons across multiple AI revisions.
 * Permits customization of programs to run automatically after AI revisions.
@@ -27,12 +27,6 @@ capable of frequent, rapid, and extremely inexpensive
 <div class="action-band" markdown>
 [Get Started](start.md){ .md-button .md-button--primary }
 </div>
-
-!!! alert
-    As of January 2024, gaining access to GPT-4 Turbo will require a payment of $1 or
-    more.
-    As of November 2023, OpenAI offers $5 in free credit for your first 3 months.
-    This can cover copyediting for approximately hundreds of thousands of words.
 
 <!-- copybreak off -->
 

@@ -1,7 +1,11 @@
-<!-- copybreak on -- ok -->
-
 Change History
 ==============
+
+Version 0.8.1 (2026-Jan-16)
+---------------------------
+
+* Updated the default model to GPT-4.1.
+* Added configuration for the reStructuredText format.
 
 Version 0.7.1 (2024-Jan-27)
 ---------------------------
