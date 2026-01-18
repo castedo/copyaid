@@ -1,7 +1,7 @@
 pages:
   stage: deploy
   image:
-    name: docker.io/squidfunk/mkdocs-material:9.4.8
+    name: docker.io/squidfunk/mkdocs-material:9.7.1
     entrypoint: [""]
   script:
     - mkdocs build --strict --verbose --site-dir public
